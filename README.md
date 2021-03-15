@@ -1,2 +1,2 @@
 # cxvision
-cxvision project robot vision lib
+cxvision image and vision process Qt application for linux or windows 
