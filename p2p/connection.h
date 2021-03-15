@@ -238,7 +238,7 @@ private:
 	void Send_Data();
     void Duty_Run();
 
-    void processRead_easy();//2020 10 06
+    void processRead_easy();
     QTcpSocket *m_psocket;
 
 	Dialog *m_pdialog;
@@ -332,9 +332,6 @@ public:
 public slots:
     void processReadyRead();
 
-    //virtual void connectToHost(QHostAddress adress,int iport);
-
-//	QByteArray *m_preqbuff;	
 };
 
 #endif
