@@ -288,7 +288,6 @@ connect(GetValueButton, SIGNAL(clicked()), this, SLOT(GetValue()));
     m_tabWidget = new QTabWidget;
     m_tabWidget->addTab(new VisionTab(m_pvisionview), tr("Vision"));
     m_tabWidget->addTab(m_diagramtab, tr("AI"));
-    //m_tabWidget->addTab(new SpectrumTab(m_pspectrum_output,m_pspectrum_input),tr("audio"));
 
     QHBoxLayout *alayout = new QHBoxLayout;
     QVBoxLayout *piclayout = new QVBoxLayout;
@@ -348,20 +347,7 @@ connect(GetValueButton, SIGNAL(clicked()), this, SLOT(GetValue()));
    m_igaptime = 100;
 
 	{ 
-#ifdef TEMPTESTCXVISION
-	
-#else
 
-		{
-
-    
-				m_ilogin = 1;	
-				ClientTextEdit->setEnabled(false); 
-
-            AddDutyfile();
-
-
-#endif
 
         m_pdialogopt = 0;
         m_pdialogopt = m_pmanager->getopt();
@@ -371,11 +357,7 @@ connect(GetValueButton, SIGNAL(clicked()), this, SLOT(GetValue()));
 
 
     }
-    ////////////////////////getlocationstringx//////////////////////
 
-
-
-#endif
 
     m_localdutytimer.start(1000, this);
    m_connectsdutytimer.start(100, this);
@@ -401,17 +383,8 @@ Dialog::~Dialog()
 	if(NULL!=m_imageViewer)
 		delete m_imageViewer;
 	m_imageViewer = NULL;
-	if(NULL!=m_sqlmain)
-		delete m_sqlmain;
-	m_sqlmain = NULL;
-	if(NULL!=m_sqlbrower)
-		delete m_sqlbrower;
-	m_sqlbrower = NULL;
-	
-#ifdef CXPYTHON 
-	if(NULL!=m_pythontest)
-		delete m_pythontest;
-#endif
+
+
 
 }
 
@@ -459,7 +432,7 @@ void Dialog::GetHttpFile(const QByteArray& filecontents)
 QByteArray Dialog::gethttpreqstring()
 {
 
-	return m_httpsendbuf;//QByteArray(".............................");
+	return m_httpsendbuf;
 }
 
 
@@ -475,12 +448,9 @@ void Dialog::serverStart()
     //m_ics = 0;//server
 	ServerstartButton->setEnabled(false);
 	ClientstartButton->setEnabled(false);
-    //addDutyButton->setEnabled(false);
     connect(&tcpServer, SIGNAL(newConnection()),this, SLOT(ServeracceptConnection()));
 
-#ifndef QT_NO_CURSOR
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-#endif
+
 
     bytesWritten = 0;
     bytesReceived = 0;
@@ -499,14 +469,11 @@ void Dialog::serverStart()
 
     serverStatusLabel->setText(tr("Listening"));
  
-	setWindowTitle(QString::fromLatin1("CxVisionAImini V5.8"));
  
 }
 void Dialog::restartserver()
 {
-#ifndef QT_NO_CURSOR
-	QApplication::setOverrideCursor(Qt::WaitCursor);
-#endif 
+
 	tcpServer.close();
 
 	connect(&tcpServer, SIGNAL(newConnection()),this, SLOT(ServeracceptConnection()));
@@ -538,7 +505,6 @@ void Dialog::restartclient( )
 
 	ClientstartButton->setEnabled(false);
 
-//cxf	if(1==m_ics)//client 
 	{
 
         {
@@ -697,15 +663,8 @@ void Dialog::ServeracceptConnection()
 void Dialog::ServerConnection_Serial()
 {
 
-  //  tcpServerConnection  = tcpServer.nextPendingConnection();
-
     m_pconnection_serial = new CxConnection_serial(this,1);//server 1
 
-    //CxConnection *pconnect = GetActiveConnect();
-    //if(NULL==pconnect)
-    //    SetActiveConnect(pconnect);
-
-     //pconnection->connectisok();
 
     quint16 iport2 = 82;
     QHostAddress hostadress2 = QHostAddress( QString("192.168.1.100"));
@@ -774,11 +733,7 @@ void Dialog::ClientIsConnection()
 
 void Dialog::SendMsg()
 {
-//////////////////////////////////////////////////////////////////////////
-//Client
 	m_qclientsend = CommandEdit->text();
-	//tcpClient.write( m_qclientsend.toLocal8Bit());
-	
 	CxConnection *pconnect = GetActiveConnect();
 	if(pconnect!=0)
 		pconnect->sendMessage(m_qclientsend);
@@ -1013,9 +968,6 @@ void Dialog::sendCommand()
             SetPieceSize(ipmsize);
              ShowLog(0,tr("set psize ") + qparm1);
             return;
-            //CxConnection *pconnect = GetActiveConnect();
-            //if(NULL!=pconnect)
-            //	pconnect->setpiecesize(ipmsize);
 		}
         else if(qcomm==tr("savefiledir"))
         {
@@ -1079,15 +1031,7 @@ void Dialog::sendCommand()
 
         else if(qcomm==tr("url"))
         {
-#ifdef BrowWin
-            {
-                m_pageviewlist[0]->currentTab()->setUrl(m_qclientsend.mid(4));
-                if(0!=m_pdialogopt)
-                    m_pdialogopt->setcurstring(m_qclientsend.mid(4).toStdString().c_str());
-           }
-           m_pageviewlist[0]->setcollectionvalidnum();
-           m_pageviewlist[0]->maketabviewone();
-#endif
+
             return;
         }
         else if(qcomm==tr("runparser"))
@@ -1095,11 +1039,7 @@ void Dialog::sendCommand()
             m_pmanager->collectionstringopt(m_editor->toPlainText().toStdString().c_str(),
                      qparm1.toStdString().c_str());
 
-
-            //m_imageparser.Compile("Image aimage;aimage.thre(10);");
             ShowLog(0,m_pmanager->getoutputstring());
-            //m_pmanager->update();
-            //m_scrollArea->update();
             return;
         }
         else if(qcomm==tr("autorun"))
@@ -1114,7 +1054,6 @@ void Dialog::sendCommand()
 
             ShowLog(0,m_pmanager->getoutputstring());
 
-            //m_pmanager->update();
             return;
         }
         else if(qcomm==tr("setvalue"))
@@ -1169,21 +1108,12 @@ void Dialog::sendCommand()
             int ix = qparm1.toInt();
             int iy = qparm2.toInt();
             QPoint apoint(ix,iy);
-          //  if(0==m_ptestconsole)
-           //     return;
-        //    m_ptestconsole->mousemove(ix,iy);
-            //QWidget *pwidget = QApplication::widgetAt(apoint);
-            //int i=0;
-            //ShowLog(0,astr);
-
-            //mousegridmove();
+      
             return;
         }
         else if(qcomm==tr("showlist"))
         {
-#ifdef BrowWin
-            m_pageviewlist[0]->showlist();
-#endif
+
             return;
         }
 
@@ -1194,20 +1124,11 @@ void Dialog::sendCommand()
 }
 void Dialog::viewparserlist(const char *pchar)
 {
-    #ifdef BrowWin
-     m_pageviewlist[0]->parserlink(pchar);
-
-    QStringList astrlist = CreateurlList(m_pageviewlist[0]->GetLink("a","href"),
-            m_pageviewlist[0]->currentTab()->url());
-
-    CreateDateList(astrlist,m_igaptime,m_igaptime);//+100s begin and gap 100
-#endif
+ 
 }
 void Dialog::viewrunjavascript(const char *pchar)
 {
-    #ifdef BrowWin
-     m_pageviewlist[0]->PageRunJavaScript(pchar);
-#endif
+ 
 
 }
 
@@ -1225,7 +1146,6 @@ void Dialog::AddDutyfile()
         {
             line = in.readLine();
             int i=0;
-            //////////////////////////////////////////////////////////////////////////
             for(i = 0;i<line.size() ;i++)
             {
                 QChar achar = line.at(i);
@@ -1239,15 +1159,10 @@ ADDDUTYNEXT:
             strdate = line.mid(0,i);
             if(i<line.size())
                 line = line.mid(i+1);
-            //////////////////////////////////////////////////////////////////////////
-            //CxConnection *pconnect = GetActiveConnect();
-            //if(NULL!=pconnect)
-            //	AddDuty(pconnect,line,strdate);
             AddLoacalDuty(line,-2,strdate);
         }
     }
 
-    //file.close();
 {
     QFile file(getlocationstringx("./cduty.txt"));
 
@@ -1260,7 +1175,6 @@ ADDDUTYNEXT:
         {
             line = in.readLine();
             int i=0;
-            //////////////////////////////////////////////////////////////////////////
             for(i = 0;i<line.size() ;i++)
             {
                 QChar achar = line.at(i);
@@ -1273,13 +1187,11 @@ ADDDUTYNEXT0:
             strdate = line.mid(0,i);
             if(i<line.size())
                 line = line.mid(i+1);
-            //////////////////////////////////////////////////////////////////////////
             CxConnection *pconnect = GetActiveConnect();
             if(NULL!=pconnect)
                 AddDuty(pconnect,line,strdate);
         }
     }
-    //file.close();
 }
 
 }
@@ -1302,7 +1214,6 @@ void Dialog::sendDuty()
 		{
 			line = in.readLine();
             int i=0;
-			//////////////////////////////////////////////////////////////////////////
             for(i = 0;i<line.size() ;i++)
 			{
 				QChar achar = line.at(i);
@@ -1316,14 +1227,10 @@ ADDDUTYNEXT:
 			strdate = line.mid(0,i);
 			if(i<line.size())
 				line = line.mid(i+1);
-			//////////////////////////////////////////////////////////////////////////
-            //CxConnection *pconnect = GetActiveConnect();
-            //if(NULL!=pconnect)
-            //	AddDuty(pconnect,line,strdate);
+
             AddLoacalDuty(line,-1,strdate);
 		}
 	}
-    //file.close();
 }
 void Dialog::LoginOK()
 {
@@ -1333,14 +1240,10 @@ void Dialog::LoginOK()
 }
 void Dialog::SetClear()
 {
- 
 	Clear();
 }
 void Dialog::SendPiece()
 {
- 
-	//////////////////////////////////////////////////////////////////////////
-	//server
     CxConnection * pactconnect = GetActiveConnect();
     QString  user ;
     if(0!=pactconnect)
@@ -1378,22 +1281,18 @@ QByteArray Dialog::loadfilestring(const QString& file) const
 	QByteArray qfilereads;
 
 	const int size = f.size();
-	//const int size = m_lastFileState.size = f.size();
 	if ( !f.open(QFile::ReadOnly) )
 	{
 		return QByteArray();
 	}
 	if ( size < 500000 )
 	{
-		// instant load for files smaller than 500kb
 		QByteArray d = f.readAll();
 		f.close();
 		return d;
 	} 
 	else
 	{
-		// load by chunks of 100kb otherwise to avoid huge peaks of memory usage
-		// and driving mad the disk drivers
 		int count = 0;
 		QByteArray ba;
 		do
@@ -1408,170 +1307,6 @@ QByteArray Dialog::loadfilestring(const QString& file) const
 }
 void Dialog::CodeViewIni()
 {
-/*
-    // QCE setup
-    m_formats = new QFormatScheme("qxs/cpp.qxf", this);
-
-    QDocument::setDefaultFormatScheme(m_formats);
-
-    QLineMarksInfoCenter::instance()->loadMarkTypes("qxs/marks.qxm");
-
-    m_session = new QEditSession("session", this);
-    connect(m_session	, SIGNAL( restored(QEditor*) ),this, SLOT( restored(QEditor*) ) );
-
-    m_snippetManager = new QSnippetManager(this);
-    m_snippetManager->loadSnippetsFromDirectory("snippets");
-
-    m_snippetBinding = new QSnippetBinding(m_snippetManager);
-
-    //m_snippetEdit->setSnippetManager(m_snippetManager);
-
-    m_languages = new QLanguageFactory(m_formats, this);
-    m_languages->addDefinitionPath("qxs");
-
-
-    m_editControl = new QCodeEdit(this);
-
-    m_editControl->editor()->setInputBinding(m_snippetBinding);
-
-    m_languages->setLanguage(m_editControl->editor(), "*.cpp");
-    m_editControl
-        ->addPanel("Line Mark Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F6"));
-
-    m_editControl
-        ->addPanel("Line Number Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F11"));
-
-    m_editControl
-        ->addPanel("Fold Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F9"));
-
-    m_editControl
-        ->addPanel("Line Change Panel", QCodeEdit::West, true)
-        ; //->setShortcut(QKeySequence("F11"));
-
-    m_editControl
-        ->addPanel("Status Panel", QCodeEdit::South, true);
-
-    m_editControl
-        ->addPanel("Goto Line Panel", QCodeEdit::South);
-
-    m_editControl
-        ->addPanel("Search Replace Panel", QCodeEdit::South);
-
-    connect(m_editControl->editor()	, SIGNAL( contentModified(bool) ),
-            this					, SLOT  ( setWindowModified(bool) ) );
-
-    m_session->addEditor(m_editControl->editor());
-
-    m_editor = m_editControl->editor();
-    //m_stack->insertWidget(1, m_editControl->editor());
-    m_mainLayout->addWidget(m_editControl->editor());
-*/
-    // create toolbars
-    /*
-    m_edit = new QToolBar(tr("Edit"), this);
-    m_edit->setIconSize(QSize(24, 24));
-    m_edit->addAction(m_editControl->editor()->action("undo"));
-    m_edit->addAction(m_editControl->editor()->action("redo"));
-    m_edit->addSeparator();
-    m_edit->addAction(m_editControl->editor()->action("cut"));
-    m_edit->addAction(m_editControl->editor()->action("copy"));
-    m_edit->addAction(m_editControl->editor()->action("paste"));
-    m_edit->addSeparator();
-    m_edit->addAction(m_editControl->editor()->action("indent"));
-    m_edit->addAction(m_editControl->editor()->action("unindent"));
-    //m_edit->addAction(m_editControl->editor()->action("comment"));
-    //m_edit->addAction(m_editControl->editor()->action("uncomment"));
-    addToolBar(m_edit);
-    m_edit->hide();
-    */
-    /*
-    m_find = new QToolBar(tr("Find"), this);
-    m_find->setIconSize(QSize(24, 24));
-    m_find->addAction(m_editControl->editor()->action("find"));
-    //find->addAction(m_editControl->editor()->action("findNext"));
-    m_find->addAction(m_editControl->editor()->action("replace"));
-    m_find->addAction(m_editControl->editor()->action("goto"));
-    addToolBar(m_find);
-    m_find->hide();
-
-
-    // settings restore
-    QSettings settings;
-
-    // general settings page
-
-    settings.beginGroup("display");
-
-    settings.beginGroup("panels");
-
-    settings.endGroup();
-
-    bool wrap = settings.value("dynamic_word_wrap", false).toBool();
-   // chkWrap->setChecked(wrap);
-    //m_editControl->editor()->setFlag(QEditor::LineWrap, wrap);
-
-    bool cmwwb = settings.value("cursor_movement_within_wrapped_blocks", true).toBool();
-  //  chkMoveInWrap->setChecked(cmwwb);
-    //m_editControl->editor()->setFlag(QEditor::CursorJumpPastWrap, cmwwb);
-
-    settings.endGroup();
-
-    int flags = QEditor::defaultFlags();
-
-    if ( wrap )
-        flags |= QEditor::LineWrap;
-    else
-        flags &= ~QEditor::LineWrap;
-
-    if ( cmwwb )
-        flags |= QEditor::CursorJumpPastWrap;
-    else
-        flags &= ~QEditor::CursorJumpPastWrap;
-
-    if ( settings.value("auto_indent", true).toBool() )
-        flags |= QEditor::AutoIndent;
-    else
-        flags &= ~QEditor::AutoIndent;
-
-    QEditor::setDefaultFlags(flags);
-
-    //spnRecent->setValue(settings.value("files/max_recent", 10).toInt());
-    //updateRecentFiles();
-
-    // editor settings page
-   // m_config = new QEditConfig(settingsStack);
-    settings.beginGroup("edit");
-    //m_config->loadKeys(readSettingsMap(settings));
-    settings.endGroup();
-    //m_config->apply();
-    //settingsStack->addWidget(m_config);
-
-    // syntax settings page
-  //  m_formatConfig = new QFormatConfig(settingsStack);
-  //  m_formatConfig->addScheme("global", m_formats);
-
-    QStringList langs = m_languages->languages();
-
-//    foreach ( const QString& lang, langs )
-//    {
-//        const QLanguageFactory::LangData& ld = m_languages->languageData(lang);
-
-//        if ( ld.s != m_formats )
- //       {
-//            m_formatConfig->addScheme(ld.lang, ld.s);
-//        }
- //   }
-
- //   settingsStack->addWidget(m_formatConfig);
-
-    // restore GUI state
-    settings.beginGroup("gui");
-
-    settings.endGroup();
-    m_session->restore(); */
 }
 void Dialog::SaveParser()
 {
@@ -1637,10 +1372,6 @@ void Dialog::getonepiecefile(int icp,int ipsize,int itolsize,const QString &qnam
 	m_piecefile.qsid = qid;
 	m_piecefile.m_qcontents[icp] = qcontent;
 
-	//GetPieceFile()->icurpiece = icp;
-	//GetPieceFile()->pieceLength = ipsize;
-	//GetPieceFile()->totallength = itolsize;
-	//GetPieceFile()->qsname = qname;
 }
 int Dialog::getonepiecefilex(int icp,int ipsize,int itolsize,const QByteArray &qname,const QByteArray &qid,const QByteArray &qcontent)
 {
@@ -1820,19 +1551,12 @@ int Dialog::getonepiecefilex(int icp,int ipsize,int itolsize,const QByteArray &q
         }
     }
 
-//
-
     return inum;
-    //GetPieceFile()->icurpiece = icp;
-    //GetPieceFile()->pieceLength = ipsize;
-    //GetPieceFile()->totallength = itolsize;
-    //GetPieceFile()->qsname = qname;
 }
 
 inline int Dialog::getpiecetransferwaittime(int icp)
 {
     QString qstime = tr("%1").arg(Dialog::GetGolbalTime());
-    //QDateTime::currentDateTime().toString(QLatin1String("MMddhhmmss"));
 
 	int itimes = GetPieceFile()->m_istatus[icp];
 	if(itimes>0)	
@@ -1926,9 +1650,7 @@ void Dialog::Get_SaveFileSend(const QString &qname,const QByteArray&databuf  )
 		QString qyear = now.toString(QLatin1String("yyyy"));
 		QString qmh = now.toString(QLatin1String("MM"));
 		QString qdy = now.toString(QLatin1String("dd"));
-        //int ih = QTime::currentTime().hour();
-        //int im = QTime::currentTime().minute();
-        //int is = QTime::currentTime().second();
+ 
 		QString qfilenamex = qyear + tr("_") +qmh + tr("_") +qdy + QTime::currentTime().toString("_hh_mm_ss");
 		savefilestring(getlocationstringx("./file/"+qfilenamex));	
 	}
@@ -1965,11 +1687,7 @@ void Dialog::Get_SaveDateFileSend(const QString &qname )
 	QString astrfile = afile.fileName();
 	QString endName = afile.suffix(); 
 	QString getfilename = afile.completeBaseName()+tr(".")+afile.completeSuffix();
-	//if(afile.completeBaseName()!=tr("") )
-	//{
-	//	savefilestring(getlocationstringx("./file/"+getfilename));	
-	//}
-	//else
+
 	{
 		QDateTime now = QDateTime::currentDateTime();
 		QString qyear = now.toString(QLatin1String("yyyy"));
@@ -1980,9 +1698,7 @@ void Dialog::Get_SaveDateFileSend(const QString &qname )
 		int is = QTime::currentTime().second();	
 		QString qfilenamex = qyear + tr("_") +qmh + tr("_") +qdy + QTime::currentTime().toString("_hh_mm_ss_zzz")+getfilename;
 		savefilestring(getlocationstringx("./file/"+qfilenamex));
-		
 
-	
 	}
 }
 void Dialog::savefile(const QByteArray &qcontent,const QString &qname)
@@ -2128,66 +1844,10 @@ void Dialog::Get_ShowPageSend()
 	m_piecefile.m_isfinish = 0;
 
 	m_databuf =  qUncompress(m_databuf);	
-#ifdef CXVISIONBSERVER 
-	//if(NULL==m_pageview)
-	//	return;
-	QString strbuf = QString::fromUtf8(m_databuf);
-	m_pageviewlist[0]->SetFrameViewHtml(strbuf);
-#endif
+
 }
 void Dialog::Get_SqlSend(CxConnection*pconnect)
 {
-#ifdef CXVISIONBSERVER 
-
-	int itolsize = m_piecefile.totallength; 
-	int ipsize =m_piecefile.pieceLength;
-
-	if(itolsize==0
-		||ipsize==0)
-		return;
-	int ipiecenum = itolsize/ipsize + (itolsize%ipsize>0?1:0);
-	m_databuf.clear();
-	for(int i=0;i<ipiecenum;i++)
-	{
-		m_databuf += m_piecefile.m_qcontents[i];	
-	}
-
-	m_piecefile.icurpiece = 0;
-	m_piecefile.pieceLength = 0;
-	m_piecefile.totallength = 0;
-	m_piecefile.qsname = "";
-	m_piecefile.qsid ="";
-	m_piecefile.m_qcontents.clear();
-	m_piecefile.m_istatus.clear();
-	m_piecefile.m_isfinish = 0;
-
-	m_databuf =  qUncompress(m_databuf);	
-
-	//if(NULL==m_pageview)
-	//	return;
-
-	QString getliststr = m_databuf;
-
-	ShowLog(0,getliststr);
- 
-	m_getlist = getliststr.split("\r\n") ;
-
-	if(m_sqlbrower!=0)
-	{
- 
-		 m_sqlbrower->AddRelationPage(m_strpage);
-		 m_sqlbrower->AddPageStringList(m_getlist);
-		 if(m_strpage!="")
-		 {
-			 m_sqlbrower->cxsql_writepage(m_strpage);
-			 m_sqlbrower->cxsql_setpagevalue("visit",tr("%1").arg(m_pagevisitnum)/*"3"*/,m_strpage);
-			 m_sqlbrower->cxsql_setpagevalue("visit",tr("%1").arg(m_pagevisitnum)/*"3"*/,m_strpage+tr("/"));
-		 }
-	}
-	
-	SetLoop(0,1);
-	
-#endif
 
 	
 }
@@ -2226,54 +1886,6 @@ void Dialog::Get_SqlxSend(CxConnection*pconnect)
 
 	m_getlist = getliststr.split("\r\n") ;
 
-#ifdef CXVISIONBSERVER 
-	if(m_sqlbrower!=0)
-	{
-		if(m_getlist.size()>0)
-		{ 
-			switch(m_pagesnum)
-			{
-				default:
-				case -5:
-				{
-					QString strpaserpage = m_getlist[0];
-					ShowLog(0,tr("sqlx list-> :")+strpaserpage);
-					m_getlist.pop_front();
-					m_sqlbrower->AddRelationPage(strpaserpage);
-					m_sqlbrower->AddPageStringList(m_getlist);
-					if(strpaserpage!="")
-					{
-						m_sqlbrower->cxsql_writepage(strpaserpage);
-						m_sqlbrower->cxsql_setpagevalue("visit",tr("%1").arg(m_pagevisitnum)/*"3"*/,strpaserpage);
-						m_sqlbrower->cxsql_setpagevalue("visit",tr("%1").arg(m_pagevisitnum)/*"3"*/,strpaserpage+tr("/"));
-						ShowLog(0,tr("SQLFinish ->Set visit ")+strpaserpage+tr("%1").arg(m_pagevisitnum));
-					}
-				}
-				break;
-				case -7:
-				case -6:
-				{
-						QString strpaserpage = m_getlist[0];
-						ShowLog(0,tr("sqlx list-> :")+strpaserpage);
-						m_getlist.pop_front();
-						m_sqlbrower->AddRelationPage(strpaserpage);
-						m_sqlbrower->AddPageStringList(m_getlist);
-						if(strpaserpage!="")
-						{
-							m_sqlbrower->cxsql_set_relation_value("visit",tr("%1").arg(m_pagevisitnum)/*"3"*/,strpaserpage);
-							ShowLog(0,tr("SQLFinish ->Set visit ")+strpaserpage+tr("%1").arg(m_pagevisitnum));
-						}
-				
-				
-				}
-				break;
-			}
-		}
-	}
-#endif
-
-
-
 
 }
 void Dialog::SetLoop(int inum,int ivalue)
@@ -2300,27 +1912,7 @@ void Dialog::ResetDateLoop(QString &qdate,int ivalue)
 void Dialog::SetSQLRecord(QString &qdate)
  {
 
-#ifdef CXVISIONBSERVER 
-	if(m_sqlbrower!=0)
-	{
-		QString strget;
-		
-		if(m_pagesrundate[0]==qdate)
-			strget = m_pagestring[0];
-		if(m_pagesrundate[1]==qdate)
-			strget = m_pagestring[1];
-		if(m_pagesrundate[2]==qdate)
-			strget = m_pagestring[2];
-		if(m_pagesrundate[3]==qdate)
-			strget = m_pagestring[3];
-			
-		QString qsymd = QDateTime::currentDateTime().toString(QLatin1String("yyyyMMdd"));
-		QString qstime = QTime::currentTime().toString(QLatin1String("hhmmss")); 
-		m_sqlbrower->cxsql_writepage(strget);
-		m_sqlbrower->cxsql_setpagevalue("datestr", qsymd + qstime/*"time"*/,strget); 
-		ShowLog(0,tr("set datestr ")+strget);
-	}
-#endif
+
 
 }
 void Dialog::Get_SaveListSend()
@@ -2356,19 +1948,7 @@ void Dialog::Get_SaveListSend()
 	
 	m_getlist.append(getliststr.split("\r\n")) ;
 	m_getlist.removeDuplicates();
-	//
 
-	//
-	
-	//FILE *m_fp =NULL;
-	//QString fileName("searchlink.txt");
-	//if(m_fp!=NULL)
-	//	return;
-	//m_fp=fopen(fileName.toLocal8Bit(),"at");
-	//for(int i=0;i<alistparm.size();i++)
-	//fprintf(m_fp, alistparm[i].toLocal8Bit());
-	//fclose(m_fp);
-	//m_fp = NULL;
 }
 void Dialog::Run_Clear()
 {
@@ -2452,10 +2032,7 @@ void Dialog::Send_LoadFile_Multi(const QString &user,const QString &qsdate)
 	if (fileName.isEmpty())
 		return;
 
-    //pconnect->setbufx(loadfilestring(fileName)) ;
-
 	Send_File_Multi(user,fileName,loadfilestring(fileName),qsdate);
-    //	Send_File(pconnect,fileName,pconnect->getbufx());
 
 }
 
@@ -2466,23 +2043,15 @@ void Dialog::PageFinish(const QString &qname,int itype,BrowserWindow*pview)
 	ShowLog(pconnect,"PageFinish "+ qname);
 	if(pconnect!=NULL)
 	{
-			
-		//AddDutyNoReply(pconnect,"sendfinish Duty,wget "+qname,geturldate(qname));
-		//if(0==m_ics)
 		if(1==pconnect->IScors())//server
-		{ 
-			//if(0==itype)
-			//	pconnect->AddDuty_frontstr("sendfinish Duty,wget "+qname,geturldate(qname),2);
-			//else if(1==itype)
+		{ 	
 			pconnect->AddMsg("pagefinish "+ sgetdate+tr(":") +qname);
 		}
 	}
 	else
 	{	
-		 //if(0==m_ics)
 		if(1==pconnect->IScors())//server
 		{	
-		//	ShowLog(0,"pagefinish"+qname);
 			if(m_localdutylist.size()>0)
 				m_localdutylist.pop_front();
 		}
@@ -2496,8 +2065,6 @@ void Dialog::PageSQLFinish(const QString &qname,int itype,BrowserWindow*pview)
 	ShowLog(pconnect,"PageFinish "+ qname);
 	if(pconnect!=NULL)
 	{ 
-		//AddDutyNoReply(pconnect,"sendfinish Duty,wget "+qname,geturldate(qname));
-		//if(0==m_ics)
 		if(1==pconnect->IScors())//server
 		{ 
 			if(getrequeststring()==tr("datefile_"))
@@ -2523,7 +2090,6 @@ void Dialog::PageImageFinish(const QString &qname ,int itype,BrowserWindow*pview
 	{  
 		if(1==pconnect->IScors())//server
 		{  
-			//Send_PageSQL_MultiEx(pconnect->GetUser(),pview,itype,"",sgetdate);
 			Send_PageView_Multi(pconnect->GetUser(),pview,sgetdate);
 		}
 	}
@@ -2536,74 +2102,13 @@ void Dialog::PageSQLFinish_Local(const QString &qname,int itype,BrowserWindow*pv
 	QString sgetdate = geturldate(qname);
 	ShowLog(pconnect,"PageFinish "+ qname);
 
-#ifdef CXVISIONBSERVER 
-	//if(pconnect!=NULL)
-	{  
-		if(NULL==pview)
-			pview = m_pageviewlist[0];
 
-		if(NULL==pview)
-			return;
-
-		if(pview==m_pageviewlist[0])
-			SetLoop(0,1);
-		if(pview==m_pageviewlist[1])
-			SetLoop(1,1);
-		if(pview==m_pageviewlist[2])
-			SetLoop(2,1);
-		if(pview==m_pageviewlist[3])
-			SetLoop(3,1);
-			
-		QString qpagelink =pview->GetFrameName();
-		QString qstring ;
-		
-		qstring = tr("div|a+nav|a+div|a+td|a+h3|a+h2|a+h1|a+span|a+li|a+p|a+dd|a");
-		
-		QStringList qsplitlist = qstring.split("+");
-		int isize = qsplitlist.size();
-		QByteArray markup;
-		markup.append(qpagelink+tr("\r\n"));
-		for(int i=0;i<isize;i++)
-		{
-			QStringList qsplitlist2 = qsplitlist[i].split("|");
-			if(qsplitlist2.size()>1)
-			{
-				QString stparser = qsplitlist2[0] + tr(" ") + qsplitlist2[1];
-				markup.append(pview->ParserHtmlelementA(stparser));
-			}
-		} 		
-		//////////////////////////////////////////////////////////////////////////
-		QString strgetlist = markup;
-		m_getlist = strgetlist.split("\r\n") ;
-		if(m_sqlbrower!=0)
-		{
-			QString strpaserpage = m_getlist[0];
-			
-			m_getlist.pop_front();
-			m_sqlbrower->AddRelationPage(strpaserpage);
-			m_sqlbrower->AddPageStringList(m_getlist);
-			if(strpaserpage!="")
-			{
-				ShowLog(0,tr("sqlx local list-> :")+strpaserpage+tr(" visit %1").arg(m_pagevisitnum));
-				m_sqlbrower->cxsql_writepage(strpaserpage);
-				m_sqlbrower->cxsql_setpagevalue("visit",tr("%1").arg(m_pagevisitnum)/*"3"*/,strpaserpage);
-				m_sqlbrower->cxsql_setpagevalue("visit",tr("%1").arg(m_pagevisitnum)/*"3"*/,strpaserpage+tr("/"));
-			}
-		}
-	}
-#endif
-
-//	removeurllist(qname);
 }
 void Dialog::DownloadFinish(const QString &qname)
 {
 	CxConnection *pconnect = geturlconnect(qname);
 	QString sgetdate = geturldate(qname);
-	//QByteArray *preqbuff =  getreqbuf(qname);
-	//ShowLog(pconnect,"DEBUG: DownloadFinish 1"+ qname);
-	//if(pconnect!=NULL)
-	//ShowLog(pconnect,"DEBUG: DownloadFinish Pconnect ok");
-	
+
 	ShowLog(pconnect,"DownloadFinish:"+ qname);
 	if(pconnect!=NULL)
 	{
@@ -2611,8 +2116,6 @@ void Dialog::DownloadFinish(const QString &qname)
 		{
 
 			sethttpreqstring(*geturlbuf(qname));
-
-			//Send_Request(pconnect,qname,*geturlbuf(qname));
 			Send_Request_Multi(pconnect->GetUser(),qname,*geturlbuf(qname),sgetdate);
 		}
 	}
@@ -2620,8 +2123,6 @@ void Dialog::DownloadFinish(const QString &qname)
 	{ 
 		sethttpreqtype(0);
 		savefile((*geturlbuf(qname)),"temp.html"); 
-		//if(m_localdutylist.size()>0)
-		//	m_localdutylist.pop_front();
 	}
 	removeurllist(qname);
 }
@@ -2646,8 +2147,6 @@ void Dialog::DownloadSQLFinish(const QString &qname,const QString &sdate)
 	{ 
 		sethttpreqtype(0);
 		savefile((*geturlbuf(qname)),"temp.html"); 
-		//if(m_localdutylist.size()>0)
-		//m_localdutylist.pop_front();
 	}
 	removeurllist(qname);
 }
@@ -2659,140 +2158,13 @@ void Dialog::appendreqbuf(const QString &qstrurl,const QByteArray &buff)
 }
 void Dialog::GSearch(CxConnection*pconnect,int itype,const QString &qstrselect)
 {
-#ifdef CXVISIONBSERVER 
 
-	//switch(itype)
-	//{
-	//case 0:
-	//	m_pageviewlist[0]->SearchClear();
-	//	break;
-	//case 1:
-	//	m_pageviewlist[0]->ParserHostEasyAll();
-	//	m_pageviewlist[0]->SetParserOpt(6);
-	//	m_pageviewlist[0]->TimerStart(true);
-	//	break;
-	//case 2:
-	//	m_pageviewlist[0]->ParserPageMapExADD();
-	//	m_pageviewlist[0]->SetParserOpt(7,qstrselect);
-	//	m_pageviewlist[0]->TimerStart(true);
-
-	//	break;
-	//case 3:
-	//	m_pageviewlist[0]->ParserPageMapExADD();
-	//	m_pageviewlist[0]->SetParserOpt(0);
-	//	m_pageviewlist[0]->TimerStart(true);
-
-	//	break;
-	//case 4:
-	//	m_pageviewlist[0]->ParserPageMapExADD();
-	//	m_pageviewlist[0]->SetParserOpt(0);
-	//	m_pageviewlist[0]->TimerStart(true);
-
-	//	break;
-
-	//case 7:
-	//	m_pageviewlist[0]->ParserPageMapExADD();
-
-	//	break;
-	//case 8:
-	//	m_pageviewlist[0]->ParserHostEasyAll();
-
-	//	break;
-
-	//case 9: 
-	//	m_pageviewlist[0]->TimerStart(false);
-	//	break;
-	//}
-
-#endif
 }
 void Dialog::timerEvent(QTimerEvent *event)
 {
-    if(event->timerId() == m_localdutytimer.timerId())
-	{  
-			int idutysize = m_localdutylist.size(); 
-			if(idutysize>0)
-            {
-                qint64 inum =  Dialog::GetGolbalTime();
-
-                int istrlen = m_localdutylist[0].m_stime.size();
-                QString qstrdate = m_localdutylist[0].m_stime.mid(0,istrlen);
-                qint64 idutydate =  qstrdate.toLongLong();
-                if(idutydate<inum)
-				{
-					if(1!=m_localdutylist[0].m_istats)
-					{
-						m_localdutylist[0].m_istats = 1; 
-
-                        setWindowTitle("RunTime:"+qstrdate);
-						//CommandProcess(m_localdutylist[0].m_stcomm);
-						switch(m_localdutylist[0].m_itype)
-						{
-							case 1:
-								WGetPage(NULL,m_localdutylist[0].m_stcomm,tr("0"));
-							break;
-							case 2:
-								WGetFile(NULL,m_localdutylist[0].m_stcomm,tr("0"));
-							break;
-							case 3:
-								Send_Picture(NULL);	
-							break;
-                            case -1:
-                                CommandEdit->setText(m_localdutylist[0].m_stcomm);
-                                sendCommand();
-                               // m_imageparser.Compile(m_codeeditor->toPlainText().toLocal8Bit());
-                               // ShowLog(0,m_os.str().c_str());
-                            break;
-                            case -2:
-                                CxConnection *pconnect = GetActiveConnect();
-                                if(pconnect
-                                &&1==m_getfilefinish)
-                                {
-                                    m_getfilefinish = 0;
-                                    m_editor->setText(m_localdutylist[0].m_stcomm);
-                                    m_pmanager->runstringcode(m_editor->toPlainText().toStdString().c_str());
-                                }
-                                else
-                                {
-                                    m_localdutylist[0].m_istats = 0;
-                                    return;
-                                }
-                            break;
-						}
-						m_localdutylist.pop_front();
-                        int isize =  widgetList3->count();
-						if(isize>0)
-						{
-                            QListWidgetItem *pitem = widgetList3->takeItem(0);
-							if(pitem)
-                                widgetList3->removeItemWidget(pitem);
-						}	
-					}
-				}
- 
-                return;
-			}
-
-
-    }
-	else if(event->timerId() == m_connectsdutytimer.timerId())
-	{
-	
-	} 
-	else if(event->timerId() == m_pagesruntimer.timerId())
-	{
-#ifdef CXVISIONDOG
-		if(CDog::DogLibraryisload())
-#endif
-
-        {
-			SqlTimerRun();
-		}
-	}
-	else
-	{
+   
         QObject::timerEvent(event);
-	}
+	
 }
 void Dialog::SetPosition(int x, int y, int w, int h)
 {
@@ -2803,1029 +2175,8 @@ void Dialog::SqlTimerRun()
 	CxConnection *pconnect = GetActiveConnect();
 	if(NULL==pconnect) 
 	{
-	//	ShowLog(NULL,"no active connect wait a loop");
 		return;
 	}
-#ifdef CXVISIONBSERVER 
-#ifndef TEMPTESTCXVISION
-// -1 ?
-// -2 wsql auto 
-// -3 local wsql auto
-// -3 wfile auto
-// -5 wsqlc auto  -> content parser such as google search page content
-
-
-	if(CanLoop(0)==1)
-	{ 
-		if(m_sqlbrower!=0)
-		{ 
-			if(m_pagesnum>0)
-			{ 
-				ShowLog(0,tr("sqlrun %1").arg(m_pagesnum) + m_strpage);
-				int ivisit1 = 0;
-				int ivisit2 = 0;
-				switch(m_pagelevel)
-				{
-				case 0: 
-					m_pagesnum = m_pagesnum + 1;
-					//////////////////////////////////////////////////////////////////////////
-					if(m_pagehost=="")
-						m_strpage = m_sqlbrower->cxsql_getpagelevel(m_pagesnum,0);
-					else
-						m_strpage = m_sqlbrower->cxsql_getpagelevel_host(m_pagesnum,0,m_pagehost);
-						
-					ivisit1	= m_sqlbrower->cxsql_readpage("visit",m_strpage).toInt(); 
-					
-					ivisit2	= m_sqlbrower->cxsql_readpage("visit",m_strpage+"/").toInt(); 
-
-					if(ivisit1< m_pagevisitnum /* 3 */
-						&&ivisit2<m_pagevisitnum /* 3 */)
-					{
-						if(m_strpage!="")
-						{ 
-							SetLoop(0,0); 
-							resqlrunTimer.restart();
-							ShowLog(0,tr("sqlrunL0 %1:").arg(m_pagesnum)+m_strpage);
-							QString strun1 = tr("wget ")+m_strpage;
-							QString strun2 = tr("getsql"); 
-							{
-								AddDuty(pconnect,strun1); 
-								AddDuty(pconnect,strun2); 
-							} 
-						}
-					}
-					//////////////////////////////////////////////////////////////////////////
-					m_pagelevel = 1;
-					break;
-				case 1:
-					//////////////////////////////////////////////////////////////////////////
-					if(m_pagehost=="")
-						m_strpage = m_sqlbrower->cxsql_getpagelevel(m_pagesnum,1);
-					else
-						m_strpage = m_sqlbrower->cxsql_getpagelevel_host(m_pagesnum,1,m_pagehost);
-					//ShowLog(0,tr("sqlrun ")+m_strpage);
-					ivisit1	= m_sqlbrower->cxsql_readpage("visit",m_strpage).toInt(); 
-					ivisit2	=  m_sqlbrower->cxsql_readpage("visit",m_strpage+"/").toInt(); 
-
-					if(ivisit1<m_pagevisitnum /* 3 */
-						&&ivisit2<m_pagevisitnum /* 3 */)
-					{
-						if(m_strpage!="")
-						{
-
-							SetLoop(0,0); 
-							resqlrunTimer.restart();
-							ShowLog(0,tr("sqlrunL1 %1:").arg(m_pagesnum)+m_strpage);
-							QString strun1 = tr("wget ")+m_strpage;
-							QString strun2 = tr("getsql");
-
-							{
-								AddDuty(pconnect,strun1); 
-								AddDuty(pconnect,strun2); 
-							}
-
-						}
-					}
-					//////////////////////////////////////////////////////////////////////////
-					m_pagelevel = 2;
-					break;
-				case 2:
-					////////////////////////////////////////////////////////////////////////////
-					if(m_pagehost=="")
-						m_strpage = m_sqlbrower->cxsql_getpagelevel(m_pagesnum,2);
-					else
-						m_strpage = m_sqlbrower->cxsql_getpagelevel_host(m_pagesnum,2,m_pagehost);
-						
-					ivisit1	= m_sqlbrower->cxsql_readpage("visit",m_strpage).toInt(); 
-					ivisit2	=  m_sqlbrower->cxsql_readpage("visit",m_strpage+"/").toInt(); 
-
-					if(ivisit1<m_pagevisitnum /* 3 */
-						&&ivisit2<m_pagevisitnum /* 3 */)
-					{
-						if(m_strpage!="")
-						{
-
-							SetLoop(0,0); 
-							resqlrunTimer.restart();
-							ShowLog(0,tr("sqlrunL2 %1:").arg(m_pagesnum)+m_strpage);
-							QString strun1 = tr("wget ")+m_strpage;
-							QString strun2 = tr("getsql");
-
-							{
-								AddDuty(pconnect,strun1); 
-								AddDuty(pconnect,strun2); 
-							}
-
-						}
-					}
-					////////////////////////////////////////////////////////////////////////////
-					m_pagelevel = 0;
-					break;
-				case 3:
-					m_pagelevel = 3;
-					break;
-				} 
-
-			}
-			else if(m_pagesnum==-1)
-			{ 
-				m_strpage = m_sqlbrower->cxsql_getpagequery();
-				int ivisit1 = 0;
-				int ivisit2 = 0;
-				ivisit1	= m_sqlbrower->cxsql_readpage("visit",m_strpage).toInt(); 
-				ivisit2	= m_sqlbrower->cxsql_readpage("visit",m_strpage+"/").toInt(); 
-
-
-				ShowLog(0,tr("sqlquery  :")+m_strpage);
-
-				if(ivisit1<m_pagevisitnum /* 3 */
-					&&ivisit2<m_pagevisitnum /* 3 */)
-				{
-					if(m_strpage!="")
-					{ 
-						SetLoop(0,0); 
-						resqlrunTimer.restart();
-						QString strun1 = tr("wget ")+m_strpage;
-						QString strun2 = tr("getsql"); 
-						{
-							AddDuty(pconnect,strun1); 
-							AddDuty(pconnect,strun2); 
-						} 
-					}
-				} 
-			}
-			else if(m_pagesnum==-2)
-			{ 
-				QString strpage = m_sqlbrower->cxsql_getStringquery();
-				int ivisit1 = 0;
-				int ivisit2 = 0;
-				ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-				ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-				if(ivisit1<m_pagevisitnum /* 3 */
-					&&ivisit2<m_pagevisitnum /* 3 */)
-				{
-					if(strpage!="")
-					{ 
-						//SetLoop(0,0); 
-						resqlrunTimer.restart();
-						QString strun1 = tr("wsql ")+strpage; 
-						{
-							//AddDuty(pconnect,strun1);  
-							QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-							ShowLog(0,tr("sql wsql :")+strpage + tr("T:")+qstime);
-							SetDateLoop(0,0,qstime,strpage);
-							AddDuty_date(pconnect,strun1,qstime);
-						} 
-					}
-				} 
-
-			}
-			else if(m_pagesnum==-3)// 
-			{ 
-				QString strpage = m_sqlbrower->cxsql_getStringquery(); 
-				m_sqlbrower->setautogridsqlnum();
-				int ivisit1 = 0;
-				int ivisit2 = 0;
-				ivisit1	= m_sqlbrower->cxsql_readstringpage("visit",strpage).toInt(); 
-				ivisit2	= m_sqlbrower->cxsql_readstringpage("visit",strpage+"/").toInt(); 
-
-				ShowLog(0,tr("sql local l0 query :")+strpage);
-
-				if(ivisit1<m_pagevisitnum /* 3 */
-					&&ivisit2<m_pagevisitnum /* 3 */)
-				{
-					if(strpage!="")
-					{ 
-						SetLoop(0,0); 
-						resqlrunTimer.restart();
-						if (m_view1time.elapsed() > 20*1000)
-						{
-							m_pageviewlist[0]->SetUsing(0);
-						}
-						if(!m_pageviewlist[0]->IsUsing())
-						{
-							m_view1time.restart();
-							m_pageviewlist[0]->loadCxPagesql_local(strpage,tr("0"));
-							return;
-						}  
-						
-					}
-				} 
-
-			}
-			else if(m_pagesnum==-4)
-			{ 
-				QString strpage = m_sqlbrower->cxsql_getStringquery();
-				int ivisit1 = 0;
-				int ivisit2 = 0;
-				QString qsvisit1	= m_sqlbrower->cxsql_readpage("datestr",strpage) ; 
-				ShowLog(0,tr("read string :")+strpage+tr(": ")+qsvisit1  );
-				if(strpage!=""
-				&&qsvisit1.size()<2)//need to set a val to make multi times download
-				{ 
-					resqlrunTimer.restart();
-					QString strun1 = tr("wfile ")+strpage; 
-					{
-						QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-						ShowLog(0,tr("sql wfile :")+strpage + tr("T:")+qstime);
-						SetDateLoop(0,0,qstime,strpage);
-						AddDuty(pconnect,tr("req 10")); 
-						AddDuty_date(pconnect,strun1,qstime);
- 
-					} 
-				} 
-  
-			}
-			else if(m_pagesnum==-5)
-			{ 
-				QString strpage = m_sqlbrower->cxsql_getStringquery();
-				int ivisit1 = 0;
-				int ivisit2 = 0;
-				ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-				ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-				if(ivisit1<m_pagevisitnum /* 3 */
-					&&ivisit2<m_pagevisitnum /* 3 */)
-				{
-					if(strpage!="")
-					{ 
-						//SetLoop(0,0); 
-						resqlrunTimer.restart();
-						QString strun1 = tr("wsqlc ")+strpage; 
-						{
-							//AddDuty(pconnect,strun1);  
-							QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-							ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-							SetDateLoop(0,0,qstime,strpage);
-							AddDuty_date(pconnect,strun1,qstime);
-						} 
-					}
-				} 
-
-			}
-			else if(m_pagesnum==-6)//relationpage
-			{ 
-			
-				QString strmethond;
-				int isearchwebtype = m_sqlbrower->getsearchwebtype();
-				if(1==isearchwebtype)
-					strmethond = m_sqlbrower->cxsql_getColString_query(2);//wsqlc, wsql, wsql AND wsqlc
-				QString strpage = m_sqlbrower->cxsql_getrelaton_query();
-				ShowLog(0,tr("relationpage search web page  ") + strpage);
-				ShowLog(0,tr("relationpage search web type %1").arg(isearchwebtype) );
-				m_sqlbrower->setautogridsqlnum();
-				switch(isearchwebtype)
-				{
-					case 1:		
-						{	 
-							if(strpage!="")
-							{  
-								resqlrunTimer.restart();
-								QString strun1;
-								if(strmethond=="wsqlc") 
-									strun1 = tr("wsqlc ")+strpage; 
-								else if(strmethond=="wsql")
-									strun1 = tr("wsql ")+strpage; 
-								else 
-									strun1 = tr("wsqlc ")+strpage; 
-								{
-									//AddDuty(pconnect,strun1);  
-									QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-									ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-									SetDateLoop(0,0,qstime,strpage);
-									AddDuty_date(pconnect,strun1,qstime);
-									//AddDuty(pconnect,strun1,qstime);
-								} 
-							}
-  
-						}
-					break;
-					case 0:
-					{
-						int ivisit1 = 0;
-						int ivisit2 = 0;
-						ivisit1	= m_sqlbrower->cxsql_read_relation_page("visit",strpage).toInt();  
-						ShowLog(0,tr("relationpage search web ivisit1 %1").arg(ivisit1) );
-						if(ivisit1<m_pagevisitnum  )
-						{
-							if(strpage!="")
-							{ 
-								//SetLoop(0,0); 
-								resqlrunTimer.restart();
-								QString strun1 = tr("wsql ")+strpage; 
-								{
-									//AddDuty(pconnect,strun1);  
-									QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-									ShowLog(0,tr("sql wsql :")+strpage + tr("T:")+qstime);
-									SetDateLoop(0,0,qstime,strpage);
-									AddDuty_date(pconnect,strun1,qstime);
-								} 
-							}
-						} 
-					}
-					break;
-				
-				}
-			}
-			else if(m_pagesnum==-7)//relationpage
-			{ 
-
-				QString strmethond;
-				int isearchwebtype = m_sqlbrower->getsearchwebtype();
-				if(1==isearchwebtype)
-					strmethond = m_sqlbrower->cxsql_getColString_query(2);//wsqlc, wsql, wsql AND wsqlc
-				QString strpage = m_sqlbrower->cxsql_getrelaton_query();
-				ShowLog(0,tr("relationpage search web page  ") + strpage);
-				ShowLog(0,tr("relationpage search web type %1").arg(isearchwebtype) );
-				m_sqlbrower->setautogridsqlnum();
-				switch(isearchwebtype)
-				{
-				case 1:		
-					{	 
-						if(strpage!="")
-						{  
-							resqlrunTimer.restart();
-							QString strun1;
-							if(strmethond=="wsqlc") 
-								strun1 = tr("wsqlc ")+strpage; 
-							else if(strmethond=="wsql")
-								strun1 = tr("wsql ")+strpage; 
-							else 
-								strun1 = tr("wsqlc ")+strpage; 
-							{
-								//AddDuty(pconnect,strun1);  
-								QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-								ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-								SetDateLoop(0,0,qstime,strpage);
-								AddDuty_date(pconnect,strun1,qstime);
-								//AddDuty(pconnect,strun1,qstime);
-							} 
-						}
-
-					}
-					break;
-				case 0:
-					{
-						int ivisit1 = 0;
-						int ivisit2 = 0;
-						ivisit1	= m_sqlbrower->cxsql_read_relation_page("visit",strpage).toInt();  
-						ShowLog(0,tr("relationpage search web ivisit1 %1").arg(ivisit1) );
-						if(ivisit1<m_pagevisitnum  )
-						{
-							if(strpage!="")
-							{ 
-								//SetLoop(0,0); 
-								resqlrunTimer.restart();
-								QString strun1 = tr("wsql ")+strpage; 
-								{
-									//AddDuty(pconnect,strun1);  
-									QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-									ShowLog(0,tr("sql wsql :")+strpage + tr("T:")+qstime);
-									SetDateLoop(0,0,qstime,strpage);
-									AddDuty_date(pconnect,strun1,qstime);
-								} 
-							}
-						} 
-					}
-					break;
-
-				}
-			}
-		}
-	}
-	else
-	{
-		if (resqlrunTimer.elapsed() > 40*1000)
-		{  
-			if(m_pagesnum==-3)
-			{
-				ShowLog(0,tr("reset sqlrun -3"));
-				resqlrunTimer.restart();
-				widgetList->clear();
-				//Clear();
-				SetLoop(0,1); 
-			}
-			else if(m_pagesnum==-4)
-			{
-				if (resqlrunTimer.elapsed() > 80*1000)
-				{
-					ShowLog(0,tr("reset sqlrun -4"));
-					resqlrunTimer.restart();
-					widgetList->clear();
-					//Clear();
-					SetLoop(0,1);  
-				}
-			}
-			else if(m_pagesnum==-2)
-			{
-				ShowLog(0,tr("reset sqlrun CLoop 0"));
-				resqlrunTimer.restart();
-				widgetList->clear();
-				 
-				SetLoop(0,1);  
-			}
-			else if(m_pagesnum==-5)
-			{
-				ShowLog(0,tr("reset sqlrun CLoop 0"));
-				resqlrunTimer.restart();
-				widgetList->clear();
-
-				SetLoop(0,1);  
-			}
-			else if(m_pagesnum==-6)
-			{
-				if (resqlrunTimer.elapsed() > 80*1000)
-				{
-					ShowLog(0,tr("reset sqlrun CLoop 0"));
-					resqlrunTimer.restart();
-					SetLoop(0,1);  
-				}
-			}
-		}  
-	}
-	if(CanLoop(1)==1)
-	{
-		if(m_pagesnum==-2)// 
-		{  
-			QString strpage = m_sqlbrower->cxsql_getStringquery();
- 
-			int ivisit1 = 0;
-			int ivisit2 = 0;
-			ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{ 
-					//SetLoop(0,0); 
-					resqlrunTimer2.restart();
-					QString strun1 = tr("wsql ")+strpage; 
-					{
-						//AddDuty(pconnect,strun1);  
-						QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-						ShowLog(0,tr("sql query :")+strpage + tr("T:")+qstime);
-						SetDateLoop(1,0,qstime,strpage);
-						AddDuty_date(pconnect,strun1,qstime);
-						
-					} 
-				}
-			} 
-
-		}
-		else if(m_pagesnum==-3)//local 
-		{ 
-			QString  strpage = m_sqlbrower->cxsql_getStringquery(); 
-			m_sqlbrower->setautogridsqlnum();
-			int ivisit1 = 0 ;
-			int ivisit2 = 0 ;
-			ivisit1	= m_sqlbrower->cxsql_readstringpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readstringpage("visit",strpage+"/").toInt(); 
-
-			ShowLog(0,tr("sql local l1 query :")+strpage);
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{ 
-					SetLoop(1,0); 
-					resqlrunTimer2.restart();
-
-					if (m_view2time.elapsed() > 20*1000)
-					{
-						m_pageviewlist[1]->SetUsing(0);
-					} 
-
-					if(!m_pageviewlist[1]->IsUsing())
-					{
-						m_view2time.restart();
-						m_pageviewlist[1]->loadCxPagesql_local(strpage,tr("0"));
-						return;
-					}    
-				}
-			} 
-
-		}
-		else if(m_pagesnum==-5)// 
-		{  
-			QString strpage = m_sqlbrower->cxsql_getStringquery();
-
-			int ivisit1 = 0;
-			int ivisit2 = 0;
-			ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{ 
-					//SetLoop(0,0); 
-					resqlrunTimer2.restart();
-					QString strun1 = tr("wsqlc ")+strpage; 
-					{
-						//AddDuty(pconnect,strun1);  
-						QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-						ShowLog(0,tr("sqlc query :")+strpage + tr("T:")+qstime);
-						SetDateLoop(1,0,qstime,strpage);
-						AddDuty_date(pconnect,strun1,qstime);
-
-					} 
-				}
-			} 
-
-		} 
-		else if(m_pagesnum==-6)//relationpage
-		{ 
-			QString strmethond;
-			int isearchwebtype = m_sqlbrower->getsearchwebtype();
-			if(1==isearchwebtype)
-				strmethond = m_sqlbrower->cxsql_getColString_query(2);//wsqlc, wsql, wsql AND wsqlc
-			QString strpage = m_sqlbrower->cxsql_getrelaton_query();
-			ShowLog(0,tr("relationpage search web page  ") + strpage);
-			ShowLog(0,tr("relationpage search web type %1").arg(isearchwebtype) );
-			m_sqlbrower->setautogridsqlnum();
-			switch(isearchwebtype)
-			{
-			case 1:		
-				{	 
-					if(strpage!="")
-					{  
-						resqlrunTimer2.restart();
-						QString strun1;
-						if(strmethond=="wsqlc") 
-							strun1 = tr("wsqlc ")+strpage; 
-						else if(strmethond=="wsql")
-							strun1 = tr("wsql ")+strpage; 
-						else 
-							strun1 = tr("wsqlc ")+strpage; 
-						{
-							//AddDuty(pconnect,strun1);  
-							QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-							ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-							SetDateLoop(1,0,qstime,strpage);
-							AddDuty_date(pconnect,strun1,qstime);
-							//AddDuty(pconnect,strun1,qstime);
-						} 
-					}
-
-				}
-				break;
-			case 0:
-				{
-					int ivisit1 = 0;
-					int ivisit2 = 0;
-					ivisit1	= m_sqlbrower->cxsql_read_relation_page("visit",strpage).toInt();  
-					ShowLog(0,tr("relationpage search web ivisit1 %1").arg(ivisit1) );
-					if(ivisit1<m_pagevisitnum  )
-					{
-						if(strpage!="")
-						{ 
-							//SetLoop(0,0); 
-							resqlrunTimer2.restart();
-							QString strun1 = tr("wsql ")+strpage; 
-							{
-								//AddDuty(pconnect,strun1);  
-								QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-								ShowLog(0,tr("sql wsql :")+strpage + tr("T:")+qstime);
-								SetDateLoop(1,0,qstime,strpage);
-								AddDuty_date(pconnect,strun1,qstime);
-							} 
-						}
-					} 
-				}
-				break;
-
-			}
-		}
-	}
-	else
-	{
-		if (resqlrunTimer2.elapsed() > 40*1000)
-		{  
-			if(m_pagesnum==-3)
-			{
-				ShowLog(0,tr("reset sqlrun reset -3 sqlrun CLoop 1"));
-				resqlrunTimer2.restart();
-				widgetList->clear();
-				//Clear();
-				SetLoop(1,1); 
-			}
-			else if(m_pagesnum==-2)
-			{
-				ShowLog(0,tr("reset sqlrun reset -2 sqlrun CLoop 1"));
-				resqlrunTimer2.restart();
-				widgetList->clear();
-				 
-				SetLoop(1,1);  
-			}
-			else if(m_pagesnum==-5)
-			{
-				ShowLog(0,tr("reset sqlrun reset -2 sqlrun CLoop 1"));
-				resqlrunTimer2.restart();
-				widgetList->clear();
-
-				SetLoop(1,1);  
-			}
-			else if(m_pagesnum==-6)
-			{
-				if (resqlrunTimer2.elapsed() > 80*1000)
-				{
-					ShowLog(0,tr("reset sqlrun CLoop 1"));
-					resqlrunTimer2.restart(); 
-					SetLoop(1,1);  
-				}
-			}
-		}
-	}
-
-	if(CanLoop(2)==1)
-	{
-		if(m_pagesnum==-2)// 
-		{  
-			QString strpage = m_sqlbrower->cxsql_getStringquery();
-			int ivisit1 = 0;
-			int ivisit2 = 0;
-			ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{  
-					resqlrunTimer3.restart();
-					QString strun1 = tr("wsql ")+strpage; 
-					{
-						//AddDuty(pconnect,strun1);  
-						QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-						ShowLog(0,tr("sql query :")+strpage + tr("T:")+qstime);
-						SetDateLoop(2,0,qstime,strpage);
-						AddDuty_date(pconnect,strun1,qstime);
-					} 
-				}
-			} 
-
-		}
-		else if(m_pagesnum==-3)//local 
-		{ 
-			QString  strpage = m_sqlbrower->cxsql_getStringquery(); 
-			m_sqlbrower->setautogridsqlnum();
-			int ivisit1 = 0 ;
-			int ivisit2 = 0 ;
-			ivisit1	= m_sqlbrower->cxsql_readstringpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readstringpage("visit",strpage+"/").toInt(); 
-
-			ShowLog(0,tr("sql local l2 query :")+strpage);
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{ 
-					SetLoop(2,0); 
-					resqlrunTimer3.restart();
-
-					if (m_view3time.elapsed() > 20*1000)
-					{
-						m_pageviewlist[2]->SetUsing(0);
-					} 
-
-					if(!m_pageviewlist[2]->IsUsing())
-					{
-						m_view3time.restart();
-						m_pageviewlist[2]->loadCxPagesql_local(strpage,tr("0"));
-						return;
-					}    
-				}
-			} 
-
-		}
-		else if(m_pagesnum==-5)// 
-		{  
-			QString strpage = m_sqlbrower->cxsql_getStringquery();
-			int ivisit1 = 0;
-			int ivisit2 = 0;
-			ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{  
-					resqlrunTimer3.restart();
-					QString strun1 = tr("wsqlc ")+strpage; 
-					{
-						//AddDuty(pconnect,strun1);  
-						QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-						ShowLog(0,tr("sql query :")+strpage + tr("T:")+qstime);
-						SetDateLoop(2,0,qstime,strpage);
-						AddDuty_date(pconnect,strun1,qstime);
-					} 
-				}
-			} 
-
-		}
-		else if(m_pagesnum==-6)//relationpage
-		{ 
-			QString strmethond;
-			int isearchwebtype = m_sqlbrower->getsearchwebtype();
-			if(1==isearchwebtype)
-				strmethond = m_sqlbrower->cxsql_getColString_query(2);//wsqlc, wsql, wsql AND wsqlc
-			QString strpage = m_sqlbrower->cxsql_getrelaton_query();
-			ShowLog(0,tr("relationpage search web page  ") + strpage);
-			ShowLog(0,tr("relationpage search web type %1").arg(isearchwebtype) );
-			m_sqlbrower->setautogridsqlnum();
-			switch(isearchwebtype)
-			{
-			case 1:		
-				{	 
-					if(strpage!="")
-					{  
-						resqlrunTimer3.restart();
-						QString strun1;
-						if(strmethond=="wsqlc") 
-							strun1 = tr("wsqlc ")+strpage; 
-						else if(strmethond=="wsql")
-							strun1 = tr("wsql ")+strpage; 
-						else 
-							strun1 = tr("wsqlc ")+strpage; 
-						{
-							//AddDuty(pconnect,strun1);  
-							QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-							ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-							SetDateLoop(2,0,qstime,strpage);
-							AddDuty_date(pconnect,strun1,qstime);
-							//AddDuty(pconnect,strun1,qstime);
-						} 
-					}
-
-				}
-				break;
-			case 0:
-				{
-					int ivisit1 = 0;
-					int ivisit2 = 0;
-					ivisit1	= m_sqlbrower->cxsql_read_relation_page("visit",strpage).toInt();  
-					ShowLog(0,tr("relationpage search web ivisit1 %1").arg(ivisit1) );
-					if(ivisit1<m_pagevisitnum  )
-					{
-						if(strpage!="")
-						{ 
-							//SetLoop(0,0); 
-							resqlrunTimer3.restart();
-							QString strun1 = tr("wsql ")+strpage; 
-							{
-								//AddDuty(pconnect,strun1);  
-								QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-								ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-								SetDateLoop(2,0,qstime,strpage);
-								AddDuty_date(pconnect,strun1,qstime);
-							} 
-						}
-					} 
-				}
-				break;
-
-			}
-		}
-	}
-	else
-	{
-		if (resqlrunTimer3.elapsed() > 20*1000)
-		{  
-			if(m_pagesnum==-3)
-			{
-				ShowLog(0,tr("reset sqlrun -3 CLoop 2"));
-				resqlrunTimer3.restart();
-				widgetList->clear();
-				//Clear();
-				SetLoop(2,1); 
-			}
-			else if(m_pagesnum==-2)
-			{
-				ShowLog(0,tr("reset sqlrun CLoop 2"));
-				resqlrunTimer3.restart();
-				widgetList->clear();
-				 
-				SetLoop(2,1);  
-			}
-			else if(m_pagesnum==-5)
-			{
-				ShowLog(0,tr("reset sqlrun CLoop 2"));
-				resqlrunTimer3.restart();
-				widgetList->clear();
-
-				SetLoop(2,1);  
-			}	
-			else if(m_pagesnum==-6)
-			{
-				if (resqlrunTimer3.elapsed() > 80*1000)
-				{
-					ShowLog(0,tr("reset sqlrun CLoop 2"));
-					resqlrunTimer3.restart(); 
-					SetLoop(2,1);  
-				}
-			}
-		}	
-
-	}
-
-	if(CanLoop(3)==1)
-	{ 
-		if(m_pagesnum==-2)//
-		{  
-			QString strpage = m_sqlbrower->cxsql_getStringquery();
-			int ivisit1 = 0;
-			int ivisit2 = 0;
-			ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{  
-					resqlrunTimer4.restart();
-					QString strun1 = tr("wsql ")+strpage; 
-					{
-						//AddDuty(pconnect,strun1);  
-						QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-						ShowLog(0,tr("sql query :")+strpage + tr("T:")+qstime);
-						SetDateLoop(3,0,qstime,strpage);
-						AddDuty_date(pconnect,strun1,qstime);
-					} 
-				}
-			} 
-		}
-		else if(m_pagesnum==-3)//local 
-		{ 
-			QString  strpage = m_sqlbrower->cxsql_getStringquery(); 
-			m_sqlbrower->setautogridsqlnum();
-			int ivisit1 = 0 ;
-			int ivisit2 = 0 ;
-			ivisit1	= m_sqlbrower->cxsql_readstringpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readstringpage("visit",strpage+"/").toInt(); 
-
-			ShowLog(0,tr("sql local l3 query :")+strpage);
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{ 
-					SetLoop(3,0); 
-					resqlrunTimer4.restart();
-
-					if (m_view4time.elapsed() > 20*1000)
-					{
-						m_pageviewlist[3]->SetUsing(0);
-					} 
-
-					if(!m_pageviewlist[3]->IsUsing())
-					{
-						m_view4time.restart();
-						m_pageviewlist[3]->loadCxPagesql_local(strpage,tr("0"));
-						return;
-					}    
-				}
-			} 
-
-		}
-		else if(m_pagesnum==-5)//
-		{  
-			QString strpage = m_sqlbrower->cxsql_getStringquery();
-			int ivisit1 = 0;
-			int ivisit2 = 0;
-			ivisit1	= m_sqlbrower->cxsql_readpage("visit",strpage).toInt(); 
-			ivisit2	= m_sqlbrower->cxsql_readpage("visit",strpage+"/").toInt(); 
-
-			if(ivisit1<m_pagevisitnum /* 3 */
-				&&ivisit2<m_pagevisitnum /* 3 */)
-			{
-				if(strpage!="")
-				{  
-					resqlrunTimer4.restart();
-					QString strun1 = tr("wsqlc ")+strpage; 
-					{
-						QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-						ShowLog(0,tr("sql query :")+strpage + tr("T:")+qstime);
-						SetDateLoop(3,0,qstime,strpage);
-						AddDuty_date(pconnect,strun1,qstime);
-					} 
-				}
-			} 
-		}
-		else if(m_pagesnum==-6)//relationpage
-		{ 
-			QString strmethond;
-			int isearchwebtype = m_sqlbrower->getsearchwebtype();
-			if(1==isearchwebtype)
-				strmethond = m_sqlbrower->cxsql_getColString_query(2);//wsqlc, wsql, wsql AND wsqlc
-			QString strpage = m_sqlbrower->cxsql_getrelaton_query();
- 
-			ShowLog(0,tr("relationpage search web page  ") + strpage);
-			ShowLog(0,tr("relationpage search web type %1").arg(isearchwebtype) );
-			m_sqlbrower->setautogridsqlnum();
-			switch(isearchwebtype)
-			{
-			case 1:		
-				{	 
-					if(strpage!="")
-					{  
-						resqlrunTimer4.restart();
-						QString strun1;
-						if(strmethond=="wsqlc") 
-							strun1 = tr("wsqlc ")+strpage; 
-						else if(strmethond=="wsql")
-							strun1 = tr("wsql ")+strpage; 
-						else 
-							strun1 = tr("wsqlc ")+strpage; 
-						{
-							//AddDuty(pconnect,strun1);  
-							QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-							ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-							SetDateLoop(3,0,qstime,strpage);
-							AddDuty_date(pconnect,strun1,qstime);
-							//AddDuty(pconnect,strun1,qstime);
-						} 
-					}
-
-				}
-				break;
-			case 0:
-				{
-					int ivisit1 = 0;
-					int ivisit2 = 0;
-					ivisit1	= m_sqlbrower->cxsql_read_relation_page("visit",strpage).toInt();  
-					ShowLog(0,tr("relationpage search web ivisit1 %1").arg(ivisit1) );
-					if(ivisit1<m_pagevisitnum  )
-					{
-						if(strpage!="")
-						{ 
-							resqlrunTimer4.restart();
-							QString strun1 = tr("wsql ")+strpage; 
-							{
-								QString qstime = QTime::currentTime().toString(QLatin1String("0mmsszzz")); 
-								ShowLog(0,tr("sql wsqlc :")+strpage + tr("T:")+qstime);
-								SetDateLoop(3,0,qstime,strpage);
-								AddDuty_date(pconnect,strun1,qstime);
-							} 
-						}
-					} 
-				}
-				break;
-
-			}
-		}
-	}
-	else
-	{
-		if (resqlrunTimer4.elapsed() > 20*1000)
-		{  
-			if(m_pagesnum==-3)
-			{
-				ShowLog(0,tr("reset sqlrun -3 CLoop 3"));
-				resqlrunTimer4.restart();
-				widgetList->clear();
-				//Clear();
-				SetLoop(3,1); 
-			}
-			else if(m_pagesnum==-2)
-			{
-				ShowLog(0,tr("reset sqlrun CLoop 3"));
-				resqlrunTimer4.restart();
-				widgetList->clear();
-				 
-				SetLoop(3,1);  
-			}
-			else if(m_pagesnum==-5)
-			{
-				ShowLog(0,tr("reset sqlrun CLoop 3"));
-				resqlrunTimer4.restart();
-				widgetList->clear();
-
-				SetLoop(3,1);  
-			}
-			else if(m_pagesnum==-6)
-			{
-				if (resqlrunTimer4.elapsed() > 80*1000)
-				{
-					ShowLog(0,tr("reset sqlrun CLoop 3"));
-					resqlrunTimer4.restart(); 
-					SetLoop(3,1);  
-				}
-			}
-		}
-
-	}
-
-#endif 
-#endif
 }
 void Dialog::setrequeststring(int itype)
 {
@@ -3862,205 +2213,35 @@ void Dialog::SetCodeText(const QString &strcode)
 
 void Dialog::Send_Picture(CxConnection*pconnect)
 {
-#ifdef CXVISIONBSERVER 
-	if(pconnect!=NULL)
-	{
 
-		if(NULL==m_pageviewlist[0])
-			return;
-		QString qpagelink = m_pageviewlist[0]->GetFrameSize();
-		QByteArray markup = m_pageviewlist[0]->GetFrameImage();
-		QFileInfo qfileinf(qpagelink);
-		QString qname = qfileinf.fileName();
-		Send_Image(pconnect,qname,markup);
-	}
-	else
-	{
-		if(NULL==m_pageviewlist[0])
-			return; 
-		m_pageviewlist[0]->SaveFrameImage();
-		//if(m_localdutylist.size()>0)
-		//	m_localdutylist.pop_front();
-	}
-#endif
 }
 void Dialog::Send_Picture_Multi( const QString &user,BrowserWindow*pview,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER 
-	//if(pconnect!=NULL)
-	{
-
-
-		if(NULL==pview)
-			pview =  m_pageviewlist[0];
-
-		if(NULL==pview)
-			return;
-		QString qpagelink = pview->GetFrameSize();
-		QByteArray markup = pview->GetFrameImage();
-		QFileInfo qfileinf(qpagelink);
-		QString qname = qfileinf.fileName();
-		Send_Image_Multi(user, qname,markup);
-	}
-	//else
-	//{
-	//	if(NULL==m_pageview)
-	//		return; 
-	//	m_pageview->SaveFrameImage();
-	//	//if(m_localdutylist.size()>0)
-	//	//	m_localdutylist.pop_front();
-	//}
-#endif
 }
 
 void Dialog::Set_FrameView(int inum ,int isx,int isy,int ivw,int ivh)
 {
 
-#ifdef CXVISIONBSERVER  
-	if(NULL==m_pageviewlist[inum])
-		return;
-	m_pageviewlist[inum]->SetFrameView(isx,isy,ivw,ivh);
-#endif
+
 }
 void Dialog::Send_Page(CxConnection*pconnect)
 {  
-#ifdef CXVISIONBSERVER 
-	if(NULL==m_pageviewlist[0])
-		return;
-	QString qpagelink = m_pageviewlist[0]->GetFrameName(); 
-	QByteArray markup = m_pageviewlist[0]->GetFramePageHtml().toUtf8();//.toBase64();//
-	//QFileInfo qfileinf(qpagelink);
-	//QString qname = qfileinf.fileName();
-	
-	Send_Page(pconnect,qpagelink,markup);
-#endif
+
 }
 
 void Dialog::Send_Page_Multi(const QString &user,BrowserWindow*pview ,const QString &qsdate)
 {  
-#ifdef CXVISIONBSERVER 
 
-	if(NULL==pview)
-		pview =  m_pageviewlist[0];
-
-	if(NULL==pview)
-		return;
-	QString qpagelink = pview->GetFrameName(); 
-	QByteArray markup = pview->GetFramePageHtml().toUtf8();//.toBase64();//
-	//QFileInfo qfileinf(qpagelink);
-	//QString qname = qfileinf.fileName();
-
-	Send_Page_Multi(user,qpagelink,markup,qsdate);
-#endif
 }
 
 
 void Dialog::Send_PageList(CxConnection*pconnect,int itype,const QString &qstrselect )
 {
-#ifdef CXVISIONBSERVER 
-	
-	if(NULL==m_pageviewlist[0])
-		return;
-	QString qpagelink = m_pageviewlist[0]->GetFrameName();
-	QString qstring ;
-	if(qstrselect==tr("")||qstrselect==tr(" "))
-		qstring = tr("div|a+nav|a+div|a+td|a+h3|a+h2|a+h1|a+span|a+li|a+p|a+dd|a");
-	else
-		qstring = qstrselect;
-	//ShowLog(0,qstring);
-	QStringList qsplitlist = qstring.split("+");
-	int isize = qsplitlist.size();
-	QByteArray markup;
-	
-	for(int i=0;i<isize;i++)
-	{
-		QStringList qsplitlist2 = qsplitlist[i].split("|");
-		if(qsplitlist2.size()>1)
-		{
-			QString stparser = qsplitlist2[0] + tr(" ") + qsplitlist2[1];
-			markup.append(m_pageviewlist[0]->ParserHtmlelementA(stparser));
-		}
-	} 
-	QFileInfo qfileinf(qpagelink);
-	QString qname = qfileinf.fileName();
-	Send_List(pconnect,qname,markup);
-#endif
 }
 
 
 void Dialog::Send_PageSQL_MultiEx(const QString &user,BrowserWindow*pview ,int itype,const QString &qstrselect,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER 
-
-	if(NULL==pview)
-		pview =  m_pageviewlist[0];
-
-	if(NULL==pview)
-		return;
-	QString qpagelink =pview->GetFrameName();
-	QString qstring ;
-
-	switch(itype)
-	{
-	default:
-	case 0:
-	case 1:
-
-		if(qstrselect==tr("")||qstrselect==tr(" "))
-			qstring = tr("div|a+nav|a+div|a+td|a+h3|a+h2|a+h1|a+span|a+li|a+p|a+dd|a");
-		else
-			qstring = qstrselect;
-		break;
-	case 2:
-
-		if(qstrselect==tr("")||qstrselect==tr(" "))
-			qstring = tr("cite");
-		else
-			qstring = qstrselect;
-		break;
-	}
-		
-		
-		
-		
-//	ShowLog(0,qstring);
-	QStringList qsplitlist = qstring.split("+");
-	int isize = qsplitlist.size();
-	QByteArray markup;
-	
-	markup.append(qpagelink+tr("\r\n"));
-	for(int i=0;i<isize;i++)
-	{
-		
- 
-		switch(itype)
-		{
-			default:
-			case 0:
-			case 1:
-				{
-					QStringList qsplitlist2 = qsplitlist[i].split("|");
-					if(qsplitlist2.size()>1)
-					{
-						QString stparser = qsplitlist2[0] + tr(" ") + qsplitlist2[1];
-						markup.append(pview->ParserHtmlelementA(stparser));
-					}
-				}
-			break;
-			case 2:
-				{
-					QString stparser = qsplitlist[i];
-					markup.append(pview->ParserHtmlelementContentA(stparser));
-				}
-			break;
-		}
-			
-		 
-	} 
-	QFileInfo qfileinf(qpagelink);
-	QString qname = qfileinf.fileName();
-	Send_SQL_MultiEx( user,qname,markup,qsdate);
-#endif
 }
 
 void Dialog::Send_PageView_Multi( const QString &user,BrowserWindow*pview,const QString &qsdate)
@@ -4072,86 +2253,13 @@ void Dialog::Send_PageView_Multi( const QString &user,BrowserWindow*pview,const 
 	if(NULL==pview)
 		return;
 
-#ifdef CXVISIONBSERVER  
-	//pview->slotViewFullScreen(true);
-	QString qpagelink;// = GetViewSize(pview);
-	QByteArray markup = GetViewImage(qpagelink,pview);
-	QFileInfo qfileinf(qpagelink);
-	QString qname = qfileinf.fileName();
-
-	Send_ImageFrame_Multi(user, qname,markup,qsdate);
-	
-#endif
 }
 
 void Dialog::Send_PageSQL_Multi(const QString &user,int itypex,const QString &qstrselect ,BrowserWindow*pview,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER 
-
-	if(NULL==pview)
-		pview =  m_pageviewlist[0];
-
-	if(NULL==pview)
-		return;
-	QString qpagelink = pview->GetFrameName();
-	QString qstring ;
-	if(qstrselect==tr("")||qstrselect==tr(" "))
-		qstring = tr("div|a+nav|a+div|a+td|a+h3|a+h2|a+h1|a+span|a+li|a+p|a+dd|a");
-	else
-		qstring = qstrselect;
-	ShowLog(0,qstring);
-	QStringList qsplitlist = qstring.split("+");
-	int isize = qsplitlist.size();
-	QByteArray markup;
-
-	for(int i=0;i<isize;i++)
-	{
-		QStringList qsplitlist2 = qsplitlist[i].split("|");
-		if(qsplitlist2.size()>1)
-		{
-			QString stparser = qsplitlist2[0] + tr(" ") + qsplitlist2[1];
-		//	markup.append(qpagelink);
-			markup.append(pview->ParserHtmlelementA(stparser));
-		}
-	} 
-	QFileInfo qfileinf(qpagelink);
-	QString qname = qfileinf.fileName();
-	Send_SQL_Multi( user,qname,markup);
-#endif
 }
 void Dialog::Send_PageList_Multi(const QString &user,int itype,const QString &qstrselect ,BrowserWindow*pview ,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER 
-
-	if(NULL==pview)
-		pview =  m_pageviewlist[0];
-
-	if(NULL==pview)
-		return;
-	QString qpagelink = pview->GetFrameName();
-	QString qstring ;
-	if(qstrselect==tr("")||qstrselect==tr(" "))
-		qstring = tr("div|a+nav|a+div|a+td|a+h3|a+h2|a+h1|a+span|a+li|a+p|a+dd|a");
-	else
-		qstring = qstrselect;
-	ShowLog(0,qstring);
-	QStringList qsplitlist = qstring.split("+");
-	int isize = qsplitlist.size();
-	QByteArray markup;
-
-	for(int i=0;i<isize;i++)
-	{
-		QStringList qsplitlist2 = qsplitlist[i].split("|");
-		if(qsplitlist2.size()>1)
-		{
-			QString stparser = qsplitlist2[0] + tr(" ") + qsplitlist2[1];
-			markup.append(pview->ParserHtmlelementA(stparser));
-		}
-	} 
-	QFileInfo qfileinf(qpagelink);
-	QString qname = qfileinf.fileName();
-	Send_List_Multi( user,qname,markup);
-#endif
 }
 
 void Dialog::C2C(CxConnection*pconnect,CxConnection*pconnect2)
@@ -4622,16 +2730,6 @@ void Dialog::Send_View_Multi( const QString &user,const QString &qnum,const QStr
 	if(pview==NULL)	
 		return;
 
-#ifdef CXVISIONBSERVER  
-	pview->slotViewFullScreen(true);
-	QString qpagelink;// = GetViewSize(pview);
-	QByteArray markup = GetViewImage(qpagelink,pview);
-	QFileInfo qfileinf(qpagelink);
-	QString qname = qfileinf.fileName();
-	
-	Send_ImageFrame_Multi(user, qname,markup,qsdate);
-	//UseMouseKeyBoardMsg(qmsg);
-#endif
 }
 void Dialog::Send_MouseKeyBoardMsg_Multi(const QString &qmsg,const QString &qsdate)
 { 
@@ -4733,16 +2831,7 @@ void Dialog::Add_Data_Multi(const QString &user,int id,const QString &qsdate)
 	}
 
     pPiece->m_user = user;
-//	for(int i=0;i<m_connections.size();i++)
-//	{
-//		QString qsconuser =m_connections[i].m_pconnect->GetUser();
-//        qsconuser = qsconuser.mid(0,10);
-//		QString qsgetuser = user.mid(0,10);
-//		if(qsconuser==qsgetuser)
-//		{
-//            m_connections[i].m_pconnect->AddData(pPiece);
-//		}
-//    }
+
 }
 
 void Dialog::Add_Data_Multi_OneUser(int id,const QString &qsdate)
@@ -4779,10 +2868,7 @@ void Dialog::Add_Data_Multi_OneUser(int id,const QString &qsdate)
 	}
 
     pPiece->m_user = m_connections[0].m_pconnect->GetUser();
-//	for(int i=0;i<m_connections.size();i++)
-//    {
-//        m_connections[i].m_pconnect->AddData(pPiece);
-//	}
+
 }
 
 void Dialog::Send_File(CxConnection*pconnect,const QString &fileName,const QByteArray &pagestr)
@@ -4868,18 +2954,8 @@ void Dialog::CollectionDataBufClear()
 }
 bool Dialog::Send_TFile_Multi(const QString &fileName,const QByteArray &pagestr,int ifilenum,int iend,const QString &qsdate)
 {
-  //  CxConnection * pactconnect = GetActiveConnect();
   QString  user  = m_connections[0].m_pconnect->GetUser();
 
-//if(0!=pactconnect)
-//{
-//    user = pactconnect->GetUser();
-//   m_recorduser = user;
-//}
-//else
-//{
-//    return false;
-//}
 
     QFileInfo qfileinf(fileName);
     QString qname = qfileinf.fileName();
