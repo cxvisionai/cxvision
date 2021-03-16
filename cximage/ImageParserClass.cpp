@@ -208,27 +208,7 @@ namespace mu
               //  m_parser.DefineClassFun("CamRun",pcam,"reversey",&HKCam::OnBnClickedReverseY);
 
 #endif
-#ifdef USE_CAMxxx
-                CamRun *pcam = 0;
-                m_parser.DefineClass("CamRun",pcam);
-                m_parser.DefineClassFun("CamRun",pcam,"enumdevice",&CamRun::OnBnClickedEnumButton);
-                m_parser.DefineClassFun("CamRun",pcam,"opendevice",&CamRun::OnBnClickedOpenButton);
-                m_parser.DefineClassFun("CamRun",pcam,"closedevice",&CamRun::OnBnClickedCloseButton);
-                m_parser.DefineClassFun("CamRun",pcam,"getresetvalue",&CamRun::GetResetValue);
 
-
-
-                m_parser.DefineClassFun("CamRun",pcam,"startgarb",&CamRun::OnBnClickedStartGrabbingButton);
-                m_parser.DefineClassFun("CamRun",pcam,"softtrig",&CamRun::OnBnClickedSoftwareOnceButton);
-                //m_parser.DefineClassFun("CamRun",pcam,"savejpg",&CamRun::SaveImageJPG);
-                m_parser.DefineClassFun("CamRun",pcam,"savebmp",&CamRun::SaveImageBMP);
-
-                m_parser.DefineClassFun("CamRun",pcam,"garbimage",&CamRun::OnBnClickedGarb);
-
-                m_parser.DefineClassFun("CamRun",pcam,"reversex",&CamRun::OnBnClickedReverseX);
-                m_parser.DefineClassFun("CamRun",pcam,"reversey",&CamRun::OnBnClickedReverseY);
-
-#endif
 
 
 
