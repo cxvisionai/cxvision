@@ -3621,408 +3621,29 @@ CxConnection* Dialog::getdateconnnect(const QString &qstring)
 }
 void Dialog::WGetPage(CxConnection*pconnect,const QString &qstring,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER
-	QUrl aurl(qstring); 
-	cxurl acxurl;
-	acxurl.m_pconnect = pconnect;
-	acxurl.m_qsdate = qsdate;
-	acxurl.m_url = aurl.toString();
-	m_urllist.push_back(acxurl);
 
-	
-	if(NULL==m_pageviewlist[0])
-		return;
-	//ShowLog(pconnect,"WGetPage DEBUG:"+acxurl.m_url);
-
-	if (m_view1time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[0]->SetUsing(0);
-	}
-	if (m_view2time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[1]->SetUsing(0);
-	}
-	if (m_view3time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[2]->SetUsing(0);
-	}
-	if (m_view4time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[3]->SetUsing(0);
-	}
- 
-	if(0==m_iviewuse)
-	{
-		m_iviewuse = 1;
-		if(!m_pageviewlist[0]->IsUsing())
-		{
-			m_view1time.restart();
-			m_pageviewlist[0]->loadCxPagesql(aurl.toString(),qsdate);
-
-			return;
-		}
-	}
-	if(1==m_iviewuse)
-	{
-		m_iviewuse = 2;
-		if(!m_pageviewlist[1]->IsUsing())
-		{
-			m_view2time.restart();
-			m_pageviewlist[1]->loadCxPagesql(aurl.toString(),qsdate);
-			return;
-		}
-	}
-	if(2==m_iviewuse)
-	{
-		m_iviewuse = 3;
-		if(!m_pageviewlist[2]->IsUsing())
-		{
-			m_view3time.restart();
-			m_pageviewlist[2]->loadCxPagesql(aurl.toString(),qsdate);
-			return;
-		}
-	}
-	if(3==m_iviewuse)
-	{
-		m_iviewuse = 0;
-		if(!m_pageviewlist[3]->IsUsing())
-		{
-			m_view4time.restart();
-			m_pageviewlist[3]->loadCxPagesql(aurl.toString(),qsdate);
-			return;
-		}
-	}
-	m_pageviewlist[0]->loadCxPagesql(aurl.toString(),qsdate);
-
-#endif
 }
 void Dialog::WSQLPage(CxConnection*pconnect,const QString &qstring,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER
-	QUrl aurl(qstring); 
-	cxurl acxurl;
-	acxurl.m_pconnect = pconnect;
-	acxurl.m_qsdate = qsdate;
-	acxurl.m_url = aurl.toString();
-	m_urllist.push_back(acxurl);
-
-
-	if(NULL==m_pageviewlist[0])
-		return;
-	
-	if (m_view1time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[0]->SetUsing(0);
-	}
-	if (m_view2time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[1]->SetUsing(0);
-	}
-	if (m_view3time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[2]->SetUsing(0);
-	}
-	if (m_view4time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[3]->SetUsing(0);
-	}
-
-
-	//ShowLog(pconnect,"WGetPage DEBUG date:"+qsdate);
-
-
-	if(0==m_iviewuse)
-	{
-		m_iviewuse = 1;
-		if(!m_pageviewlist[0]->IsUsing())
-		{
-			m_view1time.restart();
-	//		ShowLog(pconnect,"WGetPage DEBUG veiw 1 run ");
-			m_pageviewlist[0]->loadCxPagesql(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	if(1==m_iviewuse)
-	{
-		m_iviewuse = 2;
-		if(!m_pageviewlist[1]->IsUsing())
-		{
-			m_view2time.restart();
-	//		ShowLog(pconnect,"WGetPage DEBUG veiw 2 run ");
-			m_pageviewlist[1]->loadCxPagesql(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	if(2==m_iviewuse)
-	{
-		m_iviewuse = 3;
-		if(!m_pageviewlist[2]->IsUsing())
-		{
-			m_view3time.restart();
-	//		ShowLog(pconnect,"WGetPage DEBUG veiw 3 run ");
-			m_pageviewlist[2]->loadCxPagesql(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	if(3==m_iviewuse)
-	{
-		m_iviewuse = 0;
-		if(!m_pageviewlist[3]->IsUsing())
-		{
-			m_view4time.restart();
-	//		ShowLog(pconnect,"WGetPage DEBUG veiw 4 run ");
-			m_pageviewlist[3]->loadCxPagesql(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	m_iviewuse = 1;
-//	ShowLog(pconnect,"WGetPage DEBUG End veiw 1 run ");
-	m_view1time.restart();
-	m_pageviewlist[0]->loadCxPagesql(aurl.toString(),qsdate);
-	return;
-	
-#endif
 }
 void Dialog::WSQLPageC(CxConnection*pconnect,const QString &qstring,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER
-	QUrl aurl(qstring); 
-	cxurl acxurl;
-	acxurl.m_pconnect = pconnect;
-	acxurl.m_qsdate = qsdate;
-	acxurl.m_url = aurl.toString();
-	m_urllist.push_back(acxurl);
-
-
-	if(NULL==m_pageviewlist[0])
-		return;
-
-	if (m_view1time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[0]->SetUsing(0);
-	}
-	if (m_view2time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[1]->SetUsing(0);
-	}
-	if (m_view3time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[2]->SetUsing(0);
-	}
-	if (m_view4time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[3]->SetUsing(0);
-	}
-
-
-	//ShowLog(pconnect,"WGetPage DEBUG date:"+qsdate);
-
-
-	if(0==m_iviewuse)
-	{
-		m_iviewuse = 1;
-		if(!m_pageviewlist[0]->IsUsing())
-		{
-			m_view1time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 1 run ");
-
-			m_pageviewlist[0]->loadCxPagesqlc(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	if(1==m_iviewuse)
-	{
-		m_iviewuse = 2;
-		if(!m_pageviewlist[1]->IsUsing())
-		{
-			m_view2time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 2 run ");
-			m_pageviewlist[1]->loadCxPagesqlc(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	if(2==m_iviewuse)
-	{
-		m_iviewuse = 3;
-		if(!m_pageviewlist[2]->IsUsing())
-		{
-			m_view3time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 3 run ");
-			m_pageviewlist[2]->loadCxPagesqlc(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	if(3==m_iviewuse)
-	{
-		m_iviewuse = 0;
-		if(!m_pageviewlist[3]->IsUsing())
-		{
-			m_view4time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 4 run ");
-			m_pageviewlist[3]->loadCxPagesqlc(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	m_iviewuse = 1;
-	//	ShowLog(pconnect,"WGetPage DEBUG End veiw 1 run ");
-	m_view1time.restart();
-	m_pageviewlist[0]->loadCxPagesql(aurl.toString(),qsdate);
-	return;
-
-#endif
-}
-#ifdef NEWADD
-void Dialog::WImagePage(CxConnection*pconnect,const QString &qstring,const QString &qsdate)
-{
-#ifdef CXVISIONBSERVER
-	QUrl aurl(qstring); 
-	cxurl acxurl;
-	acxurl.m_pconnect = pconnect;
-	acxurl.m_qsdate = qsdate;
-	acxurl.m_url = aurl.toString();
-	m_urllist.push_back(acxurl);
-
-
-	if(NULL==m_pageviewlist[0])
-		return;
-
-	if (m_view1time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[0]->SetUsing(0);
-	}
-	if (m_view2time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[1]->SetUsing(0);
-	}
-	if (m_view3time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[2]->SetUsing(0);
-	}
-	if (m_view4time.elapsed() > 20*1000)
-	{
-		m_pageviewlist[3]->SetUsing(0);
-	}
-
-
-	//ShowLog(pconnect,"WGetPage DEBUG date:"+qsdate);
-
-
-	if(0==m_iviewuse)
-	{
-		m_iviewuse = 1;
-		if(!m_pageviewlist[0]->IsUsing())
-		{
-			m_view1time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 1 run ");
-			m_pageviewlist[0]->loadCxPageImage(aurl.toString(),qsdate);
-			return;
-		}
-	}
-	else if(1==m_iviewuse)
-	{
-		m_iviewuse = 2;
-		if(!m_pageviewlist[1]->IsUsing())
-		{
-			m_view2time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 2 run ");
-			m_pageviewlist[1]->loadCxPageImage(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	else if(2==m_iviewuse)
-	{
-		m_iviewuse = 3;
-		if(!m_pageviewlist[2]->IsUsing())
-		{
-			m_view3time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 3 run ");
-			m_pageviewlist[2]->loadCxPageImage(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	else if(3==m_iviewuse)
-	{
-		m_iviewuse = 0;
-		if(!m_pageviewlist[3]->IsUsing())
-		{
-			m_view4time.restart();
-			//		ShowLog(pconnect,"WGetPage DEBUG veiw 4 run ");
-			m_pageviewlist[3]->loadCxPageImage(aurl.toString(),qsdate);
-			return;
-		}
-	}
-
-	m_iviewuse = 1;
-	//	ShowLog(pconnect,"WGetPage DEBUG End veiw 1 run ");
-	m_view1time.restart();
-	m_pageviewlist[0]->loadCxPageImage(aurl.toString(),qsdate);
-	return;
-
-#endif
 }
 
-
-#endif
 
 void Dialog::WGetFile(CxConnection*pconnect,const QString &qstring,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER 
-
-	QUrl aurl(qstring);
-	cxurl acxurl;
-	acxurl.m_pconnect = pconnect;
-	acxurl.m_qsdate = qsdate;
-	acxurl.m_url = aurl.toString();
-	m_urllist.push_back(acxurl);
-
-
-	if(NULL==m_pageviewlist[0])
-		return;  
-
-	m_pageviewlist[0]->CxDownLoad(aurl.toString(),qsdate);
-#endif
 }
 void Dialog::WSQLGetFile(CxConnection*pconnect,const QString &qstring,const QString &qsdate)
 {
-#ifdef CXVISIONBSERVER 
-
-	QUrl aurl(qstring);
-	cxurl acxurl;
-	acxurl.m_pconnect = pconnect;
-	acxurl.m_qsdate = qsdate;
-	acxurl.m_url = aurl.toString();
-	m_urllist.push_back(acxurl);
- 
-
-	if(NULL==m_pageviewlist[0])
-		return;  
-	
-	m_pageviewlist[0]->CxDownLoadsql(aurl.toString(),qsdate);
-#endif
 }
 void Dialog::ResetPro()
 {
 
-#ifdef CXVISIONBSERVER
-	CurAppGolbalReset(); 
-#endif
 }
 void Dialog::UpDatePro()
 {  
 
-#ifdef CXVISIONBSERVER
-	CurAppGolbalUpData();
-#endif
 }
 
 void Dialog::FileDir(CxConnection*pconnect,const QString &qsDir)
@@ -4054,8 +3675,6 @@ void Dialog::AllShow(CxConnection*pconnect)
 }
 void Dialog::Clear()
 { 
-	//m_pcurrentconnect->Clear();
-	
 	m_piecefile.icurpiece = 0;
 	m_piecefile.pieceLength = 0;
 	m_piecefile.totallength = 0;
@@ -4152,19 +3771,7 @@ void Dialog::IrcOpt(CxConnection*pconnect,int iopt,const QString &qstring1,const
 	switch(iopt)
 	{
 	case 0:
-		if(qstring1!=""&&qstring2!="")
-        {
-#ifdef CXVISIONIRC
-			QStringList alist = m_ircs.keys();
-			if(false==alist.contains(qstring1))
-			{
-				m_pirc = new IrcClient(qstring1,qstring2);
-				m_pirc->resize(300, 380);
-				m_pirc->show();
-				m_ircs[qstring1] = m_pirc ;
-			} 
-#endif
-        }
+
         break;
 	case 9:
 		QStringList alist = m_ircs.keys();
@@ -4200,24 +3807,12 @@ void Dialog::IrcMsg(CxConnection*pconnect,const QString &qstring)
 	//////////////////////////////////////////////////////////////////////////
 IRCMSGNEXT0:
 	QString ircserver = qircmsg.mid(0,inulnum);
-#ifdef CXVISIONIRC
-	IrcClient*m_pirc = m_ircs[QString(ircserver)] ;
-	if(m_pirc!=NULL)
-		m_pirc->SendText(qircmsg.mid(inulnum+1));
-#endif
-	
 }
 QByteArray Dialog::GetDesktopImage()
 {
     //QSize asize = QApplication::desktop()->size();
     m_image = QPixmap::grabWindow(QApplication::desktop()->winId()).toImage();
 
- 	//m_image  = QPixmap::grabWindow(GetDesktopWindow(),0,0,asize.width(), asize.height()).toImage();
-	/*QCursor aCursor;
-	POINT curPos;
-	GetCursorPos(&curPos);
-	aCursor.setPos(curPos.x,curPos.y);
-	aCursor.p*/
 	m_image = m_image.convertToFormat(QImage::Format_RGB16);
 	m_resultImage = m_image;
  	//////////////////////////////////////////////////////////////////////////
@@ -4254,21 +3849,6 @@ QString Dialog::GetDesktopSize()
 //////////////////////////////////////////////////////////////////////////
 QByteArray Dialog::GetViewImage(QString&imagesize,BrowserWindow*pview)
 {
-#ifdef CXVISIONBSERVER 
-	if(NULL==pview)
-		pview =  m_pageviewlist[0];
- 
-	if(NULL==pview)
-		return QByteArray("");
-
-	//m_image  = QPixmap::grabWidget(pview,pview->frameGeometry()).toImage();
-	int iw,ih;
-	m_image  = pview->GetFrameQImage(iw,ih,pview->currentTab());
-
-	imagesize = tr("%1_").arg(iw)+tr("%1").arg(ih);	
-	
-	ShowLog(0,imagesize);
-#endif
 	//////////////////////////////////////////////////////////////////////////
 	m_image = m_image.convertToFormat(QImage::Format_RGB16);
 	m_resultImage = m_image;
@@ -4297,30 +3877,6 @@ QByteArray Dialog::GetViewImage(QString&imagesize,BrowserWindow*pview)
 QString Dialog::GetViewSize(BrowserWindow*pview)
 {	
 	QRect qarea;
-#ifdef CXVISIONBSERVER 
-
-
-	//if(NULL==pview)
-	//	pview =  m_pageviewlist[0];
-
-	//if(NULL==pview)
-	//	return tr("0_0"); 
-
-	////qarea = pview->frameGeometry();
-
-	//QWebFrame *frame ;
-	//if(NULL!=pview)
-	//	frame = pview->currentTab()->page()->mainFrame();
-	//else
-	//	frame =  currentTab()->page()->mainFrame();
-
-	//int iw = frame->scrollBarMaximum( Qt::Orientation::Horizontal);//geometry();
-	//int ih = frame->scrollBarMaximum( Qt::Orientation::Vertical);//geometry();
-	
-	int iw;int ih;
-	return tr("%1_").arg(iw)+tr("%1").arg(ih);
-	
-#endif
 	return tr("%1_").arg(qarea.width())+tr("%1").arg(qarea.height());
 }
 int asciiToKey(char ascii)
@@ -4540,91 +4096,7 @@ qint64 Dialog::GetGolbalTime()
 QStringList Dialog::CreateurlList(const QStringList &astrlist,const QUrl & qurl0)
 {
     QStringList resultlist;
-    QString strsch = qurl0.scheme();
-    QString strhost = qurl0.host();
-    QString strsec = qurl0.path();
-    for(int i=0;i<astrlist.size();i++)
-    {
 
-        if(!astrlist[i].isEmpty())
-        {
-                QStringList qfiletypelist = astrlist[i].split(".");
-                int iflistsize = qfiletypelist.size();
-                QString qfiletype = qfiletypelist[iflistsize-1];
-
-
-                    QUrl qurl(astrlist[i]);
-                    QString qsch = qurl.scheme();
-                    QString qhost = qurl.host();
-                    QString strpage;
-                    QString urlsec;
-                    if(qhost.isEmpty()
-                            ||qsch.isEmpty())
-                    {
-                        if(qhost.isEmpty())
-                        {
-                           qhost = strhost;
-                        }
-                        if(qsch.isEmpty())
-                        {
-                            qsch = strsch;
-                        }
-                        QStringList qsplitlist = strsec.split("/");
-                        int ilistsize = qsplitlist.size();
-                        QString qstrend = qsplitlist[ilistsize-1];
-                        QString qremoveend("/");
-                        if(!qstrend.isEmpty()
-                                &&qstrend!="/")
-                        {   
-                            for(int ilz=0;ilz<ilistsize-1;ilz++)
-                            {
-                                qremoveend =qremoveend + qsplitlist[ilz] + "/";
-                            }
-                        }
-
-
-
-                        if(qfiletype =="gz"
-                                ||qfiletype =="xz"
-                                ||qfiletype =="deb"
-                                ||qfiletype =="zip"
-                                ||qfiletype =="7z"
-                                ||qfiletype =="bz2"
-                                ||qfiletype =="pdf"
-                                ||qfiletype =="rar"
-                                ||qfiletype =="tgz"
-                                )
-                        {
-                            strpage =tr("download ")+qsch+tr("://") + qhost + qremoveend + astrlist[i];
-                        }
-                        else
-                        strpage =tr("url ")+qsch+tr("://") + qhost + qremoveend + astrlist[i];
-
-                    }
-                    else
-                    {
-                        if(qfiletype =="gz"
-                                ||qfiletype =="xz"
-                                ||qfiletype =="deb"
-                                ||qfiletype =="zip"
-                                ||qfiletype =="7z"
-                                ||qfiletype =="bz2"
-                                ||qfiletype =="pdf"
-                                ||qfiletype =="rar"
-                                ||qfiletype =="tgz"
-                                )
-                        strpage =tr("download ") + astrlist[i];
-                        else
-                        strpage =tr("url ") + astrlist[i];
-
-                    }
-                    if(!strpage.isEmpty())
-                    resultlist.append(strpage);
-
-
-            }
-
-    }
     return resultlist;
 }
 void Dialog::AddTFileDuty(QString &strdownloadtfile)
@@ -4702,15 +4174,6 @@ void Dialog::CreateDateListX(const QStringList &astrlist,qint64 ibegintime,qint6
         /// \brief fp
 
         QString filestring = strdate + tr("|")+aduty.m_stcomm+tr("\r\n");
-//        aduty.m_istats = 0;
-//        aduty.m_itype = -1;
-//        aduty.m_stime = strdate2;//tr("%1").arg(inum);
-//        aduty.m_stcomm = tr("autotestparser");
-//        m_localdutylist.push_back(aduty);
-//        widgetList3->addItem(tr("[%1 TYPE(%1)]:").arg(aduty.m_stime)+aduty.m_stcomm );
-
-//        QString filestring2 = strdate2 + tr("|")+aduty.m_stcomm+tr("\r\n");
-
             fprintf(fp,filestring.toStdString().c_str());
 //            fprintf(fp,filestring2.toStdString().c_str());
 
@@ -4999,21 +4462,6 @@ bool Dialog::runWithQtInEnvironment(const QString &cmd)
 }
 
 
-
-#ifdef CXVISIONBSERVER 
-void Dialog::Sql_PageSave()
-{
-	QString qstr = tr("https://codeload.github.com/1/2/zip/master");
-	QUrl qurl(qstr);
-	QStringList strlist;
-	QString urlsec = qurl.path();
-	strlist.append(qurl.scheme());
-	strlist.append(qurl.host());
-	strlist.append( urlsec.split(QLatin1String("/")));
-	if(m_sqlbrower!=NULL)
-		m_sqlbrower->cxsql_add_pages(strlist);
-}
-#endif 
 void Dialog::AddSendReco(CxConnection *pconnect,const QString &stime,const QString &qstr)//m_waitlist
 {
 	cxdutysend asend;
@@ -5041,20 +4489,7 @@ void Dialog::RemoveRecoT(const QString &stime)
 			return;
 		}
 	 }
-	//{
-	//	if(m_connections[i].m_pconnect==NULL)
-	//		m_connections.removeAt(i);
-	//	if(m_connections[i].m_pconnect==pconnect)
-	//	{
-	//		m_connections.removeAt(i);	
-	//		if(m_ics!= 0)
-	//		{//client
-	//			pconnect->deletesocket();
-	//		}
-	//		ReFlashUSER();
-	//		return;
-	//	}
-	//}
+
 }
 void Dialog::RemoveRecoN(const QString &sname)
 {
@@ -5068,20 +4503,6 @@ void Dialog::RemoveRecoN(const QString &sname)
 			return;
 		}
 	}
-	//{
-	//	if(m_connections[i].m_pconnect==NULL)
-	//		m_connections.removeAt(i);
-	//	if(m_connections[i].m_pconnect==pconnect)
-	//	{
-	//		m_connections.removeAt(i);	
-	//		if(m_ics!= 0)
-	//		{//client
-	//			pconnect->deletesocket();
-	//		}
-	//		ReFlashUSER();
-	//		return;
-	//	}
-	//}
 }
 
 void Dialog::removepageview(int inum)
@@ -5258,48 +4679,7 @@ void Dialog::updateview()
 }
 void Dialog::mousegridmove()
 {
-    #ifdef BrowWin
-    QPointF apoint =  m_pageviewlist[0]->currentTab()->page()->scrollPosition();
-
-    m_pageviewlist[0]->currentTab()->setZoomFactor(1);
-
-   // int igrid = 5;
-  //  if(0==m_pconsole)
-  //      return;
-  //  m_pconsole->mousemove(200,120);
-  //  m_pconsole->click(1);
-    QCoreApplication::processEvents();
-   /* for(int iz = 0;iz < 110;iz++)
-    {
-        for(int iy=0;iy<5;iy++)
-        {
-           for (int ix=0;ix < 200;ix++)
-            {
-                m_pconsole->mousemove(ix*igrid,110+iy*2*igrid);
-                QCoreApplication::processEvents();
-            }
-        }
-        m_pconsole->key("Down");
-        QCoreApplication::processEvents();
-
-    }
-
-    for(int iy=0;iy<100;iy++)
-    {
-       for (int ix=0;ix < 200;ix++)
-        {
-            m_pconsole->mousemove(ix*igrid,110+iy*2*igrid);
-            QCoreApplication::processEvents();
-        }
-    }
- */
-    m_pageviewlist[0]->showlist();
-
-
-
-//m_pageviewlist[0]->Test();
-//m_pconsole->click(qparm1.toInt());
-    #endif
+  
 }
 void Dialog::Testurl()
 {
@@ -5314,19 +4694,12 @@ void Dialog::Testurl()
         m_cxvisiontimer.stop();
     }
 
-  //  m_image = QPixmap::grabWindow(QApplication::desktop()->winId()).toImage();
-    //WId
-    //QWidget *qwidget = QWidget::find();
-
 
 
 }
 void Dialog::sceneScale(double newScale)
 {
-//    QMatrix oldMatrix = m_view->matrix();
- //   m_view->resetMatrix();
-//    m_view->translate(oldMatrix.dx(), oldMatrix.dy());
- //   m_view->scale(newScale, newScale);
+
 }
 
 void Dialog::rundutylist()
@@ -5336,15 +4709,7 @@ void Dialog::rundutylist()
 
     if(qrunstring.isEmpty())
         return;
-    #ifdef BrowWin
-    m_pageviewlist[0]->currentTab()->setUrl(qrunstring);
-   if(0!=m_pdialogopt)
-        m_pdialogopt->setcurstring(qrunstring.toStdString().c_str());
-    m_pageviewlist[0]->setcollectionvalidnum();
-    m_pageviewlist[0]->maketabviewone();
 
-
-#endif
 
     widgetList3->clear();
     widgetList3->addItems(m_pstringai->prelist());
@@ -5367,9 +4732,7 @@ void Dialog::downloadlink(QString &qstr)
 }
 void Dialog::cleartab()
 {
-    #ifdef BrowWin
-    m_pageviewlist[0]->maketabviewone();
-#endif
+
 }
 void Dialog::clearfilter()
 {
@@ -5379,11 +4742,7 @@ void Dialog::addextfilter(const QString &str)
 {
     m_pstringai->addextfilter(str.toStdString().c_str());
 }
-//void Dialog::RunAIString()
-//{
-//    QString qstr =  m_pstringai->getstring(0);
-//    runopt(qstr.toStdString().c_str());
-//}
+
 void Dialog::addkeywordfilter(const QString &str)
 {
     m_pstringai->addkeywordfilter(str.toStdString().c_str());
@@ -5420,9 +4779,6 @@ SpectrumTab::SpectrumTab(SpectrumWidget*pview1,SpectrumWidget*pview2, QWidget *p
 {
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
-//    mainLayout->addWidget(pview1);
-//    mainLayout->addWidget(pview2);
-//    mainLayout->addStretch(1);
-//    setLayout(mainLayout);
+
 }
 
