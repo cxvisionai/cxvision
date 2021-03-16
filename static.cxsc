@@ -1,0 +1,105 @@
+dialogopt opt;
+
+
+StringAI astrai;
+
+double dx=0;
+
+double dy=0;
+
+double dz=0;
+
+double dgrid =5;
+
+double ds=0;
+
+double df=0;
+
+double drun=0;
+
+opt.setgaptime(20);
+
+
+Image aimage;
+
+Image aimage1;
+
+Image aimage2;
+
+Image aimage3;
+
+Image aimage4;
+
+
+Image aimagesavepage;
+
+
+
+LineShape alineshape;
+
+double dobjfind =0;
+
+double dzoom = 2;
+
+
+double dobjtnum =0;
+
+double dobjx0 = 0;
+
+double dobjy0 = 0;
+
+double dobjw = 0;
+
+double dobjh = 0;
+
+
+double dobjx1 = 0;
+
+double dobjy1 = 0;
+double dobjnum =0;
+
+
+double dmovgapx = 0;
+
+double dmovgapy = 0;
+
+double dmovx =0;
+
+double dmovy =0;
+
+double dstoptimes=0;
+
+double druntimes=0;
+double dvalue1=0;
+double dvalue2=0;
+double dvalue3=0;
+double dvalue4=0;
+double dvalue5=0;
+
+double dtest1=0;
+double dtest2=0;
+double dtest3=0;
+double dtest4=0;
+double dtest5=0;
+
+double dpagedowntimes=0;
+
+double dpfinish1=0;
+
+double dpfinish2=0;
+
+double dpfinish3=0;
+
+
+
+CamRun acam1;
+acam1.enumdevice();
+acam1.opendevice(0);
+aimagesavepage.Show(0);
+aimage.Show(0);
+accd1.Show(0);
+aimage.Show(0);
+aimage1.Show(0);
+aimage2.Show(0);
+aimage3.Show(0);
+aimage4.Show(0);
