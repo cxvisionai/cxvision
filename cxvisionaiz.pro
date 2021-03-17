@@ -1,34 +1,21 @@
 TEMPLATE = app
 TARGET = cxvisionaiz
-QT +=  serialport testlib widgets multimedia widgets#webenginewidgets
+QT +=  serialport testlib widgets multimedia widgets
 CONFIG += c++11
 
 DEFINES += USE_CAM
-#include(editlib\lib.pri)
 
 
 qtHaveModule(opengl): QT += opengl
-#######
-#CONFIG += pillow_ssl
-
-
-#pillow_zlib: DEFINES += PILLOW_ZLIB
-
-#DEFINES += CXVISIONPILLOW
-#DEFINES +=CXVISIONIMAGEVIEW
-#DEFINES +=CXPYTHON
 
 CONFIG(debug, debug|release) {
 
 unix: LIBS += -LD:\Qt\Qt5.11.0\cxvisionai\pillow-master/lib -lpillowcored
- #     LIBS += -LD:\Qt\Qt5.11.0\cxvisionai\cxvision/cxpython2.7/lib/python2.7cv -llibcxpythonlib
 }
 CONFIG(release, debug|release) {
 unix: LIBS += -LD:\Qt\Qt5.11.0\cxvisionai\pillow-master/lib -lpillowcore
 
 }
-#LIBS += -L/usr/local/lib -lX11 -lXtst -lXinerama -lxkbcommon -ldl -lutil
-#         -LD:\Qt\Qt5.11.0\cxvisionai\cxpython2.7/lib/python2.7cv/ -llibcxpythonlib
 LIBS += -LD:\MVS\Development\Libraries\win32\ -lMvCameraControl
 INCLUDEPATH += /usr/local/include \
     D:\Qt\Qt5.11.0\cxvisionaiz\xdotool
@@ -41,13 +28,9 @@ INCLUDEPATH += D:\Qt\Qt5.11.0\cxvisionaiz\editlib\.build
 INCLUDEPATH += D:\Qt\Qt5.11.0\cxvisionaiz\editlib\qnfa
 INCLUDEPATH += D:\Qt\Qt5.11.0\cxvisionaiz\spectrum\3rdparty\fftreal
 INCLUDEPATH += D:\Qt\Qt5.11.0\cxvisionaiz\spectrum
-####
 
 INCLUDEPATH +=  D:\Qt\Qt5.11.0\cxvisionaiz \
-                D:\Qt\Qt5.11.0\cxvisionaiz\CxGen \
-                D:\Qt\Qt5.11.0\cxvisionaiz\pillow-master\pillowcore \
                 D:\Qt\Qt5.11.0\cxvisionaiz\cxparser \
-                D:\Qt\Qt5.11.0\cxvisionaiz\cxpython \
                 D:\Qt\Qt5.11.0\cxvisionaiz\AIFSM \
                 D:\Qt\Qt5.11.0\cxvisionaiz\AI \
                 D:\Qt\Qt5.11.0\cxvisionaiz\diagram \
@@ -93,18 +76,12 @@ HEADERS +=  \
     cxparser/muParserBase.h \
     cxparser/muParser.h \
     cxparser/LeakWatcher.h \
-    cxpython/cxpythontest.h \
     cxpython/ffpython.h \
     p2p/dialog.h \
     p2p/connection.h \
-    p2p/connection_serial.h \
-    p2p/connection_msg.h \
     p2p/settingsdialog.h \
     p2p/dialog.h \
     p2p/codeeditor.h \
-    p2p/codeeditor.h \
-    download/textprogressbar.h \
-    download/downloadmanager.h \
     AIFSM/AIControl.h \
     AIFSM/Control.h \
     AIFSM/FStateApproach.h \
@@ -145,8 +122,6 @@ SOURCES += \
     main.cpp \
     p2p/dialog.cpp \
     p2p/connection.cpp \
-    p2p/connection_serial.cpp \
-    p2p/connection_msg.cpp \
     p2p/settingsdialog.cpp \
     p2p/codeeditor.cpp \
     cxparser/muParserTreeNode.cpp \
@@ -163,8 +138,6 @@ SOURCES += \
     cxparser/muParserBytecode.cpp \
     cxparser/muParserBase.cpp \
     cxparser/muParser.cpp \
-    download/textprogressbar.cpp \
-    download/downloadmanager.cpp \
     AIFSM/FStateApproach.cpp \
     AIFSM/FuSMAIControl.cpp \
     AIFSM/FuSMMachine.cpp \
@@ -182,26 +155,11 @@ SOURCES += \
 
 FORMS += \
     hk/mainwindow.ui \
-    certificateerrordialog.ui \
-    passworddialog.ui \
-    downloadmanagerwidget.ui \
-    downloadwidget.ui \
     p2p/settingsdialog.ui
 
-RESOURCES += data/simplebrowser.qrc
-RESOURCES += jquery.qrc
 RESOURCES += diagramscene.qrc
-RESOURCES += spectrum/spectrum.qrc
-
-#LIBS += -LD:\Qt\Qt5.11.0\cxvisionai\cxvision/lib
-#LIBS += -lfftreal
 
 # install
 target.path = D:\Qt\Qt5.11.0\cxvisionaiz
 INSTALLS += target
 
-DISTFILES += \
-    ../pillow-master/config.pri
-
-SUBDIRS += \
-    download/downloadmanager.pro
