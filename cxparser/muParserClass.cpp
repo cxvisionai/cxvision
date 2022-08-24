@@ -34,9 +34,9 @@ namespace mu
 			return 0;
 		objstruct * pobj =  new objstruct;
 		void *pclassvar = NULL;
-		//å»ºç«‹ç±»å¯¹è±¡æˆå‘˜å˜é‡è¡¨
+		//½¨Á¢Àà¶ÔÏó³ÉÔ±±äÁ¿±í
 		string_type astrname,astrtype;
-		string_type astr = m_classname+"@"+strobjname + "@";//å»ºç«‹ç±»å¯¹è±¡æˆå‘˜ç±»å
+		string_type astr = m_classname+"@"+strobjname + "@";//½¨Á¢Àà¶ÔÏó³ÉÔ±ÀàÃû
 		for(int i=0;i<m_classdefbuf.size();i++)
 		{
 			astrname = astr + m_classStr[i];
@@ -77,7 +77,7 @@ namespace mu
 
 	};
 	//////////////////////////////////////////////////////////////////////////
-	//é€šè¿‡ç»™å®šå¯¹è±¡å’Œæµ®ç‚¹å‹å‚æ•°æˆå‘˜å‡½æ•°æŒ‡é’ˆ è°ƒç”¨ç±»æˆå‘˜å‡½æ•°
+	//Í¨¹ı¸ø¶¨¶ÔÏóºÍ¸¡µãĞÍ²ÎÊı³ÉÔ±º¯ÊıÖ¸Õë µ÷ÓÃÀà³ÉÔ±º¯Êı
 	double CreateClass::ApplyClassFunc(void *pobj,void  *apclassfunc,paramvect& parm)
 	{
 		//
@@ -85,13 +85,13 @@ namespace mu
 		return 0;
 	}
 	//////////////////////////////////////////////////////////////////////////
-	//é€šè¿‡ç»™å®šå¯¹è±¡å’ŒæŒ‡é’ˆå‹å‚æ•°æˆå‘˜å‡½æ•°æŒ‡é’ˆ è°ƒç”¨ç±»æˆå‘˜å‡½æ•°
+	//Í¨¹ı¸ø¶¨¶ÔÏóºÍÖ¸ÕëĞÍ²ÎÊı³ÉÔ±º¯ÊıÖ¸Õë µ÷ÓÃÀà³ÉÔ±º¯Êı
 	double CreateClass::ApplyClassFunc(void *pobj,void  *apclassfunc,voidparamvect& parm)
 	{
 		return 0;
 	} 
 	//////////////////////////////////////////////////////////////////////////
-	//é€šè¿‡ç»™å®šå¯¹è±¡å’Œå­—ç¬¦ä¸²å‹å‚æ•°æˆå‘˜å‡½æ•°æŒ‡é’ˆ è°ƒç”¨ç±»æˆå‘˜å‡½æ•°
+	//Í¨¹ı¸ø¶¨¶ÔÏóºÍ×Ö·û´®ĞÍ²ÎÊı³ÉÔ±º¯ÊıÖ¸Õë µ÷ÓÃÀà³ÉÔ±º¯Êı
 	double CreateClass::ApplyClassFunc(void *pobj,void  *apclassfunc,charpvect& parm)
 	{
 		return 0;

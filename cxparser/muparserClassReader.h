@@ -16,8 +16,8 @@
   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
 */
-#ifndef MU_PARSER_CLASSFUNCTION_READER_H
-#define MU_PARSER_CLASSFUNCTION_READER_H
+#ifndef MU_PARSER_CLASS_READER_H
+#define MU_PARSER_CLASS_READER_H
 
 #include <cassert>
 #include <cstdio>
@@ -32,6 +32,8 @@
 #include "muParserClass.h"
 
 
+
+
 namespace mu
 {
 
@@ -41,7 +43,7 @@ namespace mu
   /** \brief Token reader for the ParserBase class.
 
   */
-  class   ParserClassFunctionReader
+  class   ParserClassReader
   {
   private:
       typedef ParserToken<value_type, string_type> token_type;
@@ -79,9 +81,8 @@ namespace mu
 	  void *m_pClassObj;		///< Get the spec Class Object
 	  int  m_iPreFlags; ///< Ç°Ò»¸ö·ûºÅ
 
-	  stringmap_type *m_pStringVarDef;
-      string_type m_strcreateclass;
-      string_type m_strcreateobj;
+	 stringmap_type *m_pStringVarDef;
+	 CreateClass * m_pcreateclass;
   private:
 	  enum EPreCodes
 	  {
@@ -108,10 +109,7 @@ namespace mu
 		  isClassMemVar=1<<20, ///<  ".m_var"
 		  isClassMemFuc=1<<21, ///<  ".m_fucn()"
 		  isClassObj=1<<22,
-		  isIf		=1<<23,
-		  isElse	=1<<24,		
-		  isWhile	=1<<25,
-		
+		  isIfWhile	=1<<23,
 		  isANY     = ~0       ///< All of he above flags set
 	  };
 	  //cxyaddend
@@ -144,24 +142,24 @@ namespace mu
 		noLB      = 1 << 12, ///< to avoid i.e. "({","cos{",",{","+{"
 		noRB	  = 1 << 13, ///< to avoid i.e. "(}","cos}",",{}","+}"
 		noSEMIC   = 1 << 14, ///< to avoid i.e. "(;","cos;","{;","+;",""
-		noClassDef= 1 << 15, ///< to avoid i.e. "int int","int cos","int {"
-		noClassObjDef= 1 << 16, ///< to avoid i.e. pre define("int aobject;") then ".aobject;" 
-		noClassMemOp=1 << 17,///< to avoid i.e. "cos." "+." "(." 
-		noClassPointOp=1<<18,///< to avoid i.e. "=->" "+->"
-		noClassMemVar=1<<19, ///
-		noClassMemFuc=1<<20, ///
-		noClassObj=1<<21,
+		noClassDef		= 1 << 15, ///< to avoid i.e. "int int","int cos","int {"
+		noClassObjDef	= 1 << 16, ///< to avoid i.e. pre define("int aobject;") then ".aobject;" 
+		noClassMemOp	= 1 << 17,///< to avoid i.e. "cos." "+." "(." 
+		noClassPointOp	= 1 << 18,///< to avoid i.e. "=->" "+->"
+		noClassMemVar	= 1 << 19, ///
+		noClassMemFuc	= 1 << 20, ///
+		noClassObj		= 1 << 21,
         noANY     = ~0       ///< All of he above flags set
       };
 
-      ParserClassFunctionReader(const ParserClassFunctionReader &a_Reader);
-      ParserClassFunctionReader& operator=(const ParserClassFunctionReader &a_Reader);
-      void Assign(const ParserClassFunctionReader &a_Reader);
+      ParserClassReader(const ParserClassReader &a_Reader);
+      ParserClassReader& operator=(const ParserClassReader &a_Reader);
+      void Assign(const ParserClassReader &a_Reader);
 
   public:
-      ParserClassFunctionReader(ParserBase *a_pParent);
-     ~ParserClassFunctionReader();
-      ParserClassFunctionReader* Clone(ParserBase *a_pParent) const;
+      ParserClassReader(ParserBase *a_pParent);
+     ~ParserClassReader();
+      ParserClassReader* Clone(ParserBase *a_pParent) const;
       void AddValIdent(identfun_type a_pCallback);
       void SetVarCreator(facfun_type a_pFactory);		
 	  void SetClassUing(void * a_pVoid);
@@ -182,8 +180,9 @@ namespace mu
       void ReInit();
 	  void EndExpress();
       token_type ReadNextToken();
-///
-	 void SetCreateClassObj(const string_type &a_strclass,const string_type &a_strobj);
+//////////////////////////////////////////////////////////////////////////
+	  void SetCreateClass(CreateClass *pclass);
+
   //
   // private functions
   //
@@ -209,8 +208,7 @@ namespace mu
 	  bool IsClassObjDefTok(token_type &a_Tok);
 	  bool IsClassObjTok(token_type &a_Tok);
 	  bool IsClassFucTok(token_type &a_Tok);
-	 // bool IsIfWhileTok(token_type &a_Tok);
-	  bool IsReturnTok(token_type &a_Tok);
+	//  bool IsIfWhileTok(token_type &a_Tok);
 	  //cxyaddEnd
 	  void Error( EErrorCodes a_iErrc, int a_iPos = -1, 
                   const string_type &a_sTok = string_type() ) const;

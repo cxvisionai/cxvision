@@ -80,8 +80,8 @@ value_type Parser::UnaryMinus(value_type v)
 }
 value_type Parser::Mytest(value_type v) 
 { 
-    long iaddress=(long) &v;
-	return iaddress; 
+   // unsigned int iaddress= &v;
+    return 0;// iaddress;
 }
 value_type* Parser::GetAddress(value_type v)
 {

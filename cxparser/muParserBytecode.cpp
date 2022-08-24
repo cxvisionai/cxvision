@@ -257,7 +257,7 @@ namespace mu
 	  StorePtr(a_pclass);
 	  StorePtr(a_pobj);
 	  StorePtr(a_pFun);
-	 //濡傛灉鏄湪缂栬瘧鏂扮被鎴愬憳鍑芥暟灏嗗璞″湪绫绘垚鍛樺彉閲忓垪琛ㄦ帹鍏_vBase
+	 //如果是在编译新类成员函数将对象在类成员变量列表推入m_vBase
 	if(NULL !=m_pcreateclass)
 	  m_vBase.push_back(m_pcreateclass->findstacknum(a_pobj));
 	else
@@ -283,7 +283,7 @@ namespace mu
 	  StorePtr(a_pobj);
 	  StorePtr(a_pFun);
 	  StorePtr(the_pobj);
-	  //濡傛灉鏄湪缂栬瘧鏂扮被鎴愬憳鍑芥暟灏嗗璞″湪绫绘垚鍛樺彉閲忓垪琛ㄦ帹鍏_vBase
+	  //如果是在编译新类成员函数将对象在类成员变量列表推入m_vBase
 	  if(NULL !=m_pcreateclass)
 		  m_vBase.push_back(m_pcreateclass->findstacknum(a_pobj));
 	  else
@@ -313,7 +313,7 @@ namespace mu
 	  StorePtr(a_pFun);
 
 	  m_vBase.push_back(a_iIdx);
-	  //濡傛灉鏄湪缂栬瘧鏂扮被鎴愬憳鍑芥暟灏嗗璞″湪绫绘垚鍛樺彉閲忓垪琛ㄦ帹鍏_vBase
+	  //如果是在编译新类成员函数将对象在类成员变量列表推入m_vBase
 	  if(NULL !=m_pcreateclass)
 		  m_vBase.push_back(m_pcreateclass->findstacknum(a_pobj));
 	  else
@@ -443,4 +443,5 @@ namespace mu
   }
 
 } // namespace mu
+
 

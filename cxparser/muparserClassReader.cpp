@@ -1,20 +1,6 @@
  /*
-  Copyright (C) 2005 Ingo Berg
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-  software and associated documentation files (the "Software"), to deal in the Software
-  without restriction, including without limitation the rights to use, copy, modify, 
-  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
-  permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in all copies or 
-  substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
+  Copyright (C) 2010 Caixiaoyang
+ 类声明 解析类
 */
 //#include "StdAfx.h"
 #include <cassert>
@@ -24,7 +10,7 @@
 #include <stack>
 #include <string>
 
-#include "muParserClassFunctionReader.h"
+#include "muparserClassReader.h"
 
 #include "muParserBase.h"
 
@@ -39,7 +25,7 @@ namespace mu
       \sa Assign
       \throw nothrow
   */
-  ParserClassFunctionReader::ParserClassFunctionReader(const ParserClassFunctionReader &a_Reader) 
+  ParserClassReader::ParserClassReader(const ParserClassReader &a_Reader) 
   { 
     Assign(a_Reader);
   }
@@ -51,7 +37,7 @@ namespace mu
       \param a_Reader Object to copy to this token reader.
       \throw nothrow
   */
-  ParserClassFunctionReader& ParserClassFunctionReader::operator=(const ParserClassFunctionReader &a_Reader) 
+  ParserClassReader& ParserClassReader::operator=(const ParserClassReader &a_Reader) 
   {
     if (&a_Reader!=this)
       Assign(a_Reader);
@@ -65,7 +51,7 @@ namespace mu
       \param a_Reader Object from which the state should be copied.
       \throw nothrow
   */
-  void ParserClassFunctionReader::Assign(const ParserClassFunctionReader &a_Reader)
+  void ParserClassReader::Assign(const ParserClassReader &a_Reader)
   {
     m_pParser = a_Reader.m_pParser;
     m_strFormula = a_Reader.m_strFormula;
@@ -101,7 +87,7 @@ namespace mu
       \post #m_pParser==a_pParser
       \param a_pParent Parent parser object of the token reader.
   */
-  ParserClassFunctionReader::ParserClassFunctionReader(ParserBase *a_pParent)
+  ParserClassReader::ParserClassReader(ParserBase *a_pParent)
     :m_pParser(a_pParent)
     ,m_strFormula()
     ,m_iPos(0)
@@ -127,6 +113,7 @@ namespace mu
 	,m_bClassDef(false)
 	,m_iPreFlags(0)
 	,m_pStringVarDef(0)
+	,m_pcreateclass(0)
   {
     assert(m_pParser);
     SetParent(m_pParser);
@@ -136,40 +123,44 @@ namespace mu
   
       \throw nothrow
   */
-  ParserClassFunctionReader::~ParserClassFunctionReader()
+  ParserClassReader::~ParserClassReader()
   {}
 
   //---------------------------------------------------------------------------
-  /** \brief Create instance of a ParserClassFunctionReader identical with this 
+  /** \brief Create instance of a ParserClassReader identical with this 
               and return its pointer. 
 
       This is a factory method the calling function must take care of the object destruction.
 
-      \return A new ParserClassFunctionReader object.
+      \return A new ParserClassReader object.
       \throw nothrow
   */
-  ParserClassFunctionReader* ParserClassFunctionReader::Clone(ParserBase *a_pParent) const
+  ParserClassReader* ParserClassReader::Clone(ParserBase *a_pParent) const
   {
-    std::auto_ptr<ParserClassFunctionReader> ptr(new ParserClassFunctionReader(*this));
+    std::auto_ptr<ParserClassReader> ptr(new ParserClassReader(*this));
     ptr->SetParent(a_pParent);
     return ptr.release();
   }
 
   //---------------------------------------------------------------------------
-  void ParserClassFunctionReader::AddValIdent(identfun_type a_pCallback)
+  void ParserClassReader::AddValIdent(identfun_type a_pCallback)
   {
     m_vIdentFun.push_back(a_pCallback);
   }
 
   //---------------------------------------------------------------------------
-  void ParserClassFunctionReader::SetVarCreator(facfun_type a_pFactory)
+  void ParserClassReader::SetVarCreator(facfun_type a_pFactory)
   {
     m_pFactory = a_pFactory;
   }
   //cxyadd---------------------------------------------------------------------
-  void ParserClassFunctionReader::SetClassUing(void * a_pVoid)
+  void ParserClassReader::SetClassUing(void * a_pVoid)
   {
 	  m_pClass=a_pVoid;
+  }
+  void ParserClassReader::SetCreateClass(CreateClass *pclass)
+  {
+	 m_pcreateclass = pclass;
   }
   //cxyaddend------------------------------------------------------------------
   //---------------------------------------------------------------------------
@@ -178,7 +169,7 @@ namespace mu
       \return #m_iPos
       \throw nothrow
   */
-  int ParserClassFunctionReader::GetPos() const
+  int ParserClassReader::GetPos() const
   {
     return m_iPos;
   }
@@ -189,14 +180,14 @@ namespace mu
       \return #m_strFormula
       \throw nothrow
   */
-  const string_type& ParserClassFunctionReader::GetFormula() const
+  const string_type& ParserClassReader::GetFormula() const
   {
     return m_strFormula;
   }
 
   //---------------------------------------------------------------------------
   /** \brief Return a map containing the used variables only. */
-  const varmap_type& ParserClassFunctionReader::GetUsedVar() const
+  const varmap_type& ParserClassReader::GetUsedVar() const
   {
     return m_UsedVar;
   }
@@ -207,14 +198,14 @@ namespace mu
       Sets the formula position index to zero and set Syntax flags to default for initial formula parsing.
       \pre [assert] triggered if a_szFormula==0
   */
-  void ParserClassFunctionReader::SetFormula(const string_type &a_strFormula)
+  void ParserClassReader::SetFormula(const string_type &a_strFormula)
   {
     m_strFormula = a_strFormula;
     ReInit();
   }
 
   //---------------------------------------------------------------------------
-  void ParserClassFunctionReader::SetDefs( const funmap_type *a_pFunDef, 
+  void ParserClassReader::SetDefs( const funmap_type *a_pFunDef, 
                                    const funmap_type *a_pOprtDef,
                                    const funmap_type *a_pInfixOprtDef,
                                    const funmap_type *a_pPostOprtDef,
@@ -240,14 +231,14 @@ namespace mu
     Those function should return a complete list of variables including 
     those the are not defined by the time of it's call.
   */
-  void ParserClassFunctionReader::IgnoreUndefVar(bool bIgnore)
+  void ParserClassReader::IgnoreUndefVar(bool bIgnore)
   {
     m_bIgnoreUndefVar = bIgnore;
   }
 
   //----------------------------------------------------------------------------------
   //使用类型判断状态
-  void ParserClassFunctionReader::UsingClassDef(bool busing)
+  void ParserClassReader::UsingClassDef(bool busing)
   {
 	  m_bClassDef=busing;
   }
@@ -260,7 +251,7 @@ namespace mu
       \throw nothrow
       \sa ESynCodes
   */
-  void ParserClassFunctionReader::ReInit()
+  void ParserClassReader::ReInit()
   {
     m_iPos = 0;
     m_iSynFlags = noOPT | noBC | noPOSTOP | noASSIGN | noRB  | noClassObjDef;
@@ -271,8 +262,7 @@ namespace mu
   }
 
 
-
-  void ParserClassFunctionReader::EndExpress()
+  void ParserClassReader::EndExpress()
   {
     m_iSynFlags = noOPT | noBC | noPOSTOP | noASSIGN | noRB | noClassObjDef;
     m_iBrackets = 0;
@@ -281,28 +271,34 @@ namespace mu
   }
   //---------------------------------------------------------------------------
   /** \brief Read the next token from the string. */ 
-ParserClassFunctionReader::token_type ParserClassFunctionReader::ReadNextToken()
+ParserClassReader::token_type ParserClassReader::ReadNextToken()
 {
     assert(m_pParser);
     std::stack<int> FunArgs;
     const char_type *szFormula = m_strFormula.c_str();
     token_type tok;
-	//command"\\ "
+	//command//代码注释去除“/* adadf*/”
 	if(szFormula[m_iPos]=='/')
-	{
-		
-		if(szFormula[m_iPos+1]=='/')
+	{ 
+		if(szFormula[m_iPos+1]=='*')
 		{
 			++m_iPos;
 			++m_iPos;
 			while( szFormula[m_iPos]
-			&&szFormula[m_iPos]!='\r'
-			&&szFormula[m_iPos]!='\n')
+			&&szFormula[m_iPos]!='*')
 			{
 				++m_iPos;
 			}
+			if(szFormula[m_iPos]=='*')
+				if(szFormula[m_iPos+1]=='/')
+				{
+					++m_iPos;
+					++m_iPos;
+				}
 		}
 	}
+	//if(szFormula[m_iPos]=='\r'
+	//	||szFormula[m_iPos]=='\n')
 	//remove null char
 	while (szFormula[m_iPos]==' '
 		||szFormula[m_iPos]==0x09//TAB
@@ -312,43 +308,42 @@ ParserClassFunctionReader::token_type ParserClassFunctionReader::ReadNextToken()
 
 	if ( IsEOF(tok) )
 		return tok;     // Check for end of formula //cxyexplain: meet ""
-	if ( IsOprt(tok) )  
-		return tok;		// Check for user defined binary operator//cxyexplain: meet sin cos...
-    if ( IsBuiltIn(tok) ) 
+	//if ( IsOprt(tok) )  
+	//	return tok;		// Check for user defined binary operator//cxyexplain: meet sin cos...
+	if ( IsBuiltIn(tok) ) 
 		return tok;		// Check built in operators / tokens{ , } = ,
-    if ( IsFunTok(tok) )
-		return tok;     // Check for function token
-    if ( IsValTok(tok) )
-		return tok;     // Check for values / constant tokens '1','2'.... 
-    if ( IsVarTok(tok) )
-		return tok;     // Check for variable tokens 'a','b','c'.....
-	if ( IsStrVarTok(tok) )
-		return tok;		// Check for string variables
-    if ( IsString(tok) )
-		return tok;     // Check for String tokens
-    if ( IsInfixOpTok(tok) )
-		return tok;		// Check for unary operators
-    if ( IsPostOpTok(tok) )
-		return tok;		// Check for unary operators
+	//   if ( IsFunTok(tok) )
+	//	return tok;     // Check for function token
+	//   if ( IsValTok(tok) )
+	//	return tok;     // Check for values / constant tokens '1','2'.... 
+	//   if ( IsVarTok(tok) )
+	//	return tok;     // Check for variable tokens 'a','b','c'.....
+	//if ( IsStrVarTok(tok) )
+	//	return tok;		// Check for string variables
+	//   if ( IsString(tok) )
+	//	return tok;     // Check for String tokens
+	//   if ( IsInfixOpTok(tok) )
+	//	return tok;		// Check for unary operators
+	//   if ( IsPostOpTok(tok) )
+	//	return tok;		// Check for unary operators
+
 		
 	
 	//
 	//if (m_bClassDef&&IsIfWhileok(tok))
 	//	return tok;
-	//if ( m_bClassDef&&IsClassDefTok(tok))//在类定义
-	//	return tok;		//Check for class type is / int, double, myclassdef
-	//if ( m_bClassDef&&IsClassObjDefTok(tok))//类对象声明
-	//	return tok;     // check for class value /  a (int a, double a)
-	if ( IsClassObjTok(tok))//类对象声明
+	if ( IsClassDefTok(tok))//类定义
+		return tok;		//Check for class type is / int, double, myclassdef
+	if ( IsClassObjDefTok(tok))//类对象声明
 		return tok;     // check for class value /  a (int a, double a)
-	if ( IsClassFucTok(tok))//类成员函数声明
-		return tok;
-
-
+	//if ( m_bClassDef&&IsClassObjTok(tok))//类对象声明
+	//	return tok;     // check for class value /  a (int a, double a)
+	//if ( m_bClassDef&&IsClassFucTok(tok))//类成员函数声明
+	//	return tok;
 	//cxyaddend
 	//cxyadd end
-    if ( (m_bIgnoreUndefVar || m_pFactory) && IsUndefVarTok(tok) )  
-		return tok;
+	//  if ( (m_bIgnoreUndefVar || m_pFactory) && IsUndefVarTok(tok) )  
+		//return tok;
 
     // Check for unknown token
     // 
@@ -362,14 +357,8 @@ ParserClassFunctionReader::token_type ParserClassFunctionReader::ReadNextToken()
     return token_type(); // never reached
 }
 
-void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,const string_type &a_strobj)
-{
-	m_strcreateclass = a_strclass;
-	m_strcreateobj = a_strobj;
-}
-
-//---------------------------------------------------------------------------
-  void ParserClassFunctionReader::SetParent(ParserBase *a_pParent)
+  //---------------------------------------------------------------------------
+  void ParserClassReader::SetParent(ParserBase *a_pParent)
   {
     m_pParser  = a_pParent; 
     m_pFunDef  = &a_pParent->m_FunDef;
@@ -394,7 +383,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
     \return The Position of the first character not listed in a_szCharSet.
     \throw nothrow
   */
-  int ParserClassFunctionReader::ExtractToken( const char_type *a_szCharSet, 
+  int ParserClassReader::ExtractToken( const char_type *a_szCharSet, 
                                        string_type &a_sTok, int a_iPos ) const
   {
 	//return end position and first
@@ -413,7 +402,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
       \param a_Tok  [out] Operator token if one is found. This can either be a binary operator or an infix operator token.
       \return true if an operator token has been found.
   */
-  bool ParserClassFunctionReader::IsBuiltIn(token_type &a_Tok)
+  bool ParserClassReader::IsBuiltIn(token_type &a_Tok)
   {
 
 	  const char_type **pOprtDef = m_pParser->GetOprtDef();
@@ -516,7 +505,6 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 					m_iPreFlags =  isLB;
 					m_iSynFlags =  noBC | noOPT | noEND | noCOMMA | noPOSTOP | noASSIGN | noRB | noSEMIC;
 						
-					//m_prebracketstorage.push_back();
 					++m_iBigBrackets;
 
 					break;
@@ -559,6 +547,8 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 				default:      // The operator is listed in c_DefaultOprt, but not here. This is a bad thing...
 				  Error(ecINTERNAL_ERROR);
 			} // switch operator id
+		
+			
 			m_iPos += (int)len;
 			a_Tok.Set( (ECmdCode)i, pOprtDef[i] );
 			return true;
@@ -576,7 +566,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
       \throw nothrow
       \sa IsOprt, IsFunTok, IsStrFunTok, IsValTok, IsVarTok, IsString, IsInfixOpTok, IsPostOpTok
   */
-  bool ParserClassFunctionReader::IsEOF(token_type &a_Tok)
+  bool ParserClassReader::IsEOF(token_type &a_Tok)
   {
     const char_type* szFormula = m_strFormula.c_str();
 
@@ -593,13 +583,41 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 		  Error(ecMISSING_BIGBRACKET,m_iPos,_T("}"));
 
       m_iSynFlags = 0;
+      
       a_Tok.Set(cmEND);//cxyexplain:set express end
-
 
       return true;
     }
 
-    return false;
+//cx2017 02 05 chage 
+// find return;
+	string_type strTok;
+	//Get function name and first position and end position
+	int iEnd = ExtractToken(m_pParser->ValidNameChars(), strTok, m_iPos);
+	if (iEnd==m_iPos)
+		return false;
+
+    if(strTok==string_type("return"))
+	{
+		m_iSynFlags = 0;
+		a_Tok.Set(cmEND);//cxyexplain:set express end
+	} 
+	else
+		return false;
+
+	m_iPos = (int)iEnd;
+	if (m_iSynFlags & noFUN)
+		Error(ecUNEXPECTED_FUN, m_iPos-(int)a_Tok.GetAsString().length(), a_Tok.GetAsString());
+ 
+	m_iSynFlags = noBO | noBC | noVAL | noVAR | noCOMMA | noFUN | noOPT 
+	| noPOSTOP | noINFIXOP | noEND | noSTR
+	| noASSIGN | noLB | noRB | noClassDef
+	| noClassObjDef | noClassMemOp | noClassPointOp | noClassMemVar
+	| noClassMemFuc | noClassObj  ;//only ";"
+ 
+	m_iPreFlags = isEND;
+  
+    return true;
   }
   ///////////////////////////////////////cxyadd end/////////////////////////////////
 
@@ -607,7 +625,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
   /** \brief Check if a string position contains a unary infix operator. 
       \return true if a function token has been found false otherwise.
   */
-  bool ParserClassFunctionReader::IsInfixOpTok(token_type &a_Tok)
+  bool ParserClassReader::IsInfixOpTok(token_type &a_Tok)
   {
     string_type sTok;
     int iEnd = ExtractToken(m_pParser->ValidInfixOprtChars(), sTok, m_iPos);
@@ -635,7 +653,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
       \return true if a function token has been found false otherwise.
       \pre [assert] m_pParser!=0
   */
-  bool ParserClassFunctionReader::IsFunTok(token_type &a_Tok)
+  bool ParserClassReader::IsFunTok(token_type &a_Tok)
   {
     string_type strTok;
 	//Get function name and first position and end position
@@ -660,7 +678,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 
   //---------------------------------------------------------------------------
   /** \brief Check if a string position contains a unary post value operator. */
-  bool ParserClassFunctionReader::IsPostOpTok(token_type &a_Tok)
+  bool ParserClassReader::IsPostOpTok(token_type &a_Tok)
   {
     // Tricky problem with equations like "3m+5":
     //     m is a postfix operator, + is a valid sign for postfix operators and 
@@ -701,7 +719,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
       \param a_Tok  [out] Operator token if one is found. This can either be a binary operator or an infix operator token.
       \return true if an operator token has been found.
   */
-  bool ParserClassFunctionReader::IsOprt(token_type &a_Tok)
+  bool ParserClassReader::IsOprt(token_type &a_Tok)
   {
     //get first point of string
 	/*  Define Oprt Chars "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -742,7 +760,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
     \param a_Tok [out] If a value token is found it will be placed here.
     \return true if a value token has been found.
   */
-  bool ParserClassFunctionReader::IsValTok(token_type &a_Tok)
+  bool ParserClassReader::IsValTok(token_type &a_Tok)
   {
     assert(m_pConstDef);
     assert(m_pParser);
@@ -804,7 +822,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
       \param a_Tok [out] If a variable token has been found it will be placed here.
 	    \return true if a variable token has been found.
   */
-  bool ParserClassFunctionReader::IsVarTok(token_type &a_Tok)
+  bool ParserClassReader::IsVarTok(token_type &a_Tok)
   {
     if (!m_pVarDef->size())
       return false;
@@ -813,7 +831,6 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
     int iEnd = ExtractToken(m_pParser->ValidNameChars(), strTok, m_iPos);
     if (iEnd==m_iPos)
       return false;
-	strTok =   m_strcreateclass +"@"+ m_strcreateobj+"@" + strTok;//类功能函数的实现中将变量转化成全局变量
 
     varmap_type::const_iterator item =  m_pVarDef->find(strTok);
     if (item==m_pVarDef->end())
@@ -841,12 +858,12 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
   \throw nothrow
   //申明类变量
   */
-  bool ParserClassFunctionReader::IsClassObjDefTok(token_type &a_Tok)
+  bool ParserClassReader::IsClassObjDefTok(token_type &a_Tok)
   {
 	  if(isClassDef!=m_iPreFlags
 		  &&isClassPointObjDef!=m_iPreFlags)
 		  return false;
-
+	  
 	  string_type strTok;
 
 	  int iEnd = ExtractToken(m_pParser->ValidNameChars(), strTok, m_iPos);
@@ -863,46 +880,38 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 
 	  if(isClassDef==m_iPreFlags)
 	  {
-		  if(str==typeid(value_type).name())//是底层运算类 double
-		  {
-				  if ( m_bIgnoreUndefVar || m_pFactory )  
-				  {	
-					  //如果变量工厂函数定义，从变量工厂产生变量
-					  return false;
-				  }
-				  else
+		  //if(str==typeid(value_type).name())//是底层运算类 double
+		  //{
+		//  if ( m_bIgnoreUndefVar || m_pFactory )  
+		//  {	
+		//	  //如果变量工厂函数定义，从变量工厂产生变量
+		//	  return false;
+		//  }
+		//  else
 				  {
 						  //如果变量工厂没定义从 ，类定义类自定义添加变量提供指针
-						  value_type *fVar =(value_type *) ( m_pClassBase->addvar(strTok));//var factory org form a class
-						  if(0==fVar)
+						  if(NULL==m_pcreateclass)
+								assert(0);
+						  bool bcreate=m_pcreateclass->addclassdef(m_pClassBase,strTok);
+						 // value_type *fVar =(value_type *) ( m_pClassBase->addvar(strTok));//var factory org form a class
+						  if(false == bcreate)
 							  Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(), strTok);
-						  a_Tok.SetVar(fVar, strTok );
-						  (*m_pVarDef)[strTok] = fVar;
-						  m_UsedVar[strTok] = fVar;  // Add variable to used-var-list
+							a_Tok.SetClassVarDef(m_pClassBase,NULL, strTok ); 
+						 //a_Tok.SetVar(fVar, strTok );
+						  //(*m_pVarDef)[strTok] = fVar;
+						  //m_UsedVar[strTok] = fVar;  // Add variable to used-var-list
 				  }	
-		  }
-		  else
-		  {
-				//if(str=="string")
-				//{//字串类型
-				//	  string_type *fstr =(string_type*)( m_pClassBase->addvar(strTok));
-				//	  if(0==fstr)
+		  //}
+		  //else
+		  //{
+				//	 //属于自定义类或其它定义类型 
+				//	  void *pclassvar=m_pClassBase->addvar(strTok);
+				//	  if(0==pclassvar)//类实现对象重复
 				//		  Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(), a_Tok.GetAsString());
-				//	  a_Tok.SetStringVar(fstr,strTok);
-				//	  (*m_pStringVarDef)[strTok] = fstr;
-				//}
-				//else
-				{
-					 //属于自定义类或其它定义类型 
-					  void *pclassvar=m_pClassBase->addvar(strTok);
-					  if(0==pclassvar)//类实现对象重复
-						  Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(), strTok);
-					  //need to set !need to do
-					  m_pClassObj=pclassvar;
-					  a_Tok.SetClassVarDef(m_pClassBase,pclassvar, strTok );
-				}
-		  }
-
+				//	  //need to set !need to do
+				//	  m_pClassObj=pclassvar;
+				//	  a_Tok.SetClassVarDef(m_pClassBase,pclassvar, strTok );
+		  //}
 	  }
 	  else 
 	  if(isClassPointObjDef==m_iPreFlags)
@@ -911,33 +920,10 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 		  {
 			  //底层运算类暂时不考虑指针
 			  assert(0);//底层指针暂时不定义
-			  //if ( m_bIgnoreUndefVar || m_pFactory )  
-			  //{	
-				 // //如果变量工厂函数定义，从变量工厂产生变量
-				 // return false;
-			  //}
-			  //else
-			  //{
-				 // //如果变量工厂没定义从 ，类定义类自定义添加变量提供指针
-				 // value_type *fVar =(value_type *) ( m_pClassBase->addvar(strTok));//var factory org form a class
-				 // if(0==fVar)
-					//  Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(), a_Tok.GetAsString());
-				 // a_Tok.SetVar(fVar, strTok );
-
-				 // (*m_pVarDef)[strTok] = fVar;
-				 // m_UsedVar[strTok] = fVar;  // Add variable to used-var-list
-			  //}
 		  }
 		  else
 		  {
-			  //属于自定义类或其它
-			  void *pclassvar=m_pClassBase->addpointvar(strTok,0);
-
-			  if(0==pclassvar)//类实现对象重复
-				  Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(), strTok);
-			  //need to set !need to do
-			  m_pClassObj=pclassvar;
-			  a_Tok.SetClassVar(m_pClassBase,pclassvar, strTok );
+			  assert(0);//指针暂时不定义
 		  }
 
 	  }
@@ -960,7 +946,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
   \throw nothrow
   //类变量
   */
-  bool ParserClassFunctionReader::IsClassObjTok(token_type &a_Tok)
+  bool ParserClassReader::IsClassObjTok(token_type &a_Tok)
   {	
 	  if( 0!=m_iPreFlags
 		  &&isSEMIC!=m_iPreFlags
@@ -975,7 +961,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 	  int iEnd = ExtractToken(m_pParser->ValidNameChars(), strTok, m_iPos);
 	  if (iEnd==m_iPos)
 		  return false;
-	  strTok =   m_strcreateclass +"@"+ m_strcreateobj+"@" + strTok;//类功能函数的实现中将变量转化成全局变量
+
 	  if (m_iSynFlags & noClassObj)
 		  Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(), strTok);
 	  //遍历类列表中的变量列表查找存在当前变量否
@@ -1023,7 +1009,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
   类申明定义                                                           
  
   */
-  bool ParserClassFunctionReader::IsClassDefTok(token_type &a_Tok)
+  bool ParserClassReader::IsClassDefTok(token_type &a_Tok)
   {
 	  if(0!=m_iPreFlags
 		  &&isSEMIC!=m_iPreFlags
@@ -1065,7 +1051,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
   /** \brief Check whether the token at a given position is a Class function token.
   // class function
   */
-  bool ParserClassFunctionReader::IsClassFucTok(token_type &a_Tok)
+  bool ParserClassReader::IsClassFucTok(token_type &a_Tok)
   {
  
 
@@ -1090,7 +1076,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 	  return true;
   }
 
-  //bool ParserClassFunctionReader::IsIfWhileTok(token_type &a_Tok)
+  //bool ParserClassReader::IsIfWhileTok(token_type &a_Tok)
   //{
 	 // if(0!=m_iPreFlags
 		//  &&isSEMIC!=m_iPreFlags
@@ -1113,7 +1099,6 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 		//m_iPreFlags = isIfWhile;
 		//if(strTok==string_type("while"))
 		//{
-		//	
 		//	a_Tok.SetIfWhile(strTok);
 		//}
 		//if(strTok==string_type("if"))
@@ -1128,7 +1113,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 	 // }
   //}
   //---------------------------------------------------------------------------
-  bool ParserClassFunctionReader::IsStrVarTok(token_type &a_Tok)
+  bool ParserClassReader::IsStrVarTok(token_type &a_Tok)
   {
     if (!m_pStrVarDef || !m_pStrVarDef->size())
       return false;
@@ -1162,7 +1147,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
 	    \return true if a variable token has been found.
       \throw nothrow
   */
-  bool ParserClassFunctionReader::IsUndefVarTok(token_type &a_Tok)
+  bool ParserClassReader::IsUndefVarTok(token_type &a_Tok)
   {
     string_type strTok;
     int iEnd = ExtractToken(m_pParser->ValidNameChars(), strTok, m_iPos);
@@ -1170,7 +1155,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
       return false;
 
     if (m_iSynFlags & noVAR)
-      Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(),strTok);
+      Error(ecUNEXPECTED_VAR, m_iPos - (int)a_Tok.GetAsString().length(), strTok);
 
     // If a factory is available implicitely create new variables
     if (m_pFactory)
@@ -1207,7 +1192,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
       \sa IsOprt, IsFunTok, IsStrFunTok, IsValTok, IsVarTok, IsEOF, IsInfixOpTok, IsPostOpTok
       \throw nothrow
   */
-  bool ParserClassFunctionReader::IsString(token_type &a_Tok)
+  bool ParserClassReader::IsString(token_type &a_Tok)
   {
     if (m_strFormula[m_iPos]!='"') 
       return false;
@@ -1250,7 +1235,7 @@ void ParserClassFunctionReader::SetCreateClassObj(const string_type &a_strclass,
     \param a_strTok [in] The token string representation associated with the error.
     \throw ParserException always throws thats the only purpose of this function.
   */
-  void  ParserClassFunctionReader::Error( EErrorCodes a_iErrc, 
+  void  ParserClassReader::Error( EErrorCodes a_iErrc, 
                                   int a_iPos, 
                                   const string_type &a_sTok) const
   {

@@ -99,3 +99,4 @@ typedef std::map<string_type, ParserCallback> funmap_type;
 } // namespace mu
 
 #endif
+

@@ -1222,7 +1222,7 @@ private:
 //////////////////////////////////////////////////////////////////////////
 	
 
-	value_type RunCollectionOpt() const;//è¿è¡Œæ”¶é›†å­—ä¸²å‰–æåç”Ÿæˆçš„æ“ä½œç¬¦
+	value_type RunCollectionOpt() const;//ÔËĞĞÊÕ¼¯×Ö´®ÆÊÎöºóÉú³ÉµÄ²Ù×÷·û
 	value_type RunOptStack(TokeStack & optstack) const;
 	//double m_dtimelimit;
 	//mutable double m_druntime;
@@ -1254,3 +1254,4 @@ private:
 } // namespace mu
 
 #endif
+

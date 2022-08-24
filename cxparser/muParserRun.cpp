@@ -170,7 +170,7 @@ namespace mu
 				return true;
 			}
 			else if(sLine=="Set VarFact")
-			{//è®¾ç½®å˜é‡å·¥å‚ å¯ä»¥è‡ªç”ŸæˆæœªçŸ¥å˜é‡ä¸º é»˜è®¤ç±»å‹ï¼ˆdoubleï¼‰å˜é‡ï¼Œå‰ææ˜¯ç±»å®šä¹‰ä½¿ç”¨å…³é—­ï¼ˆclose classdefï¼‰
+			{//ÉèÖÃ±äÁ¿¹¤³§ ¿ÉÒÔ×ÔÉú³ÉÎ´Öª±äÁ¿Îª Ä¬ÈÏÀàĞÍ£¨double£©±äÁ¿£¬Ç°ÌáÊÇÀà¶¨ÒåÊ¹ÓÃ¹Ø±Õ£¨close classdef£©
 				SetVarFactory();
 				return true;
 			}
@@ -184,7 +184,7 @@ namespace mu
 				m_parser.UsingClass(false);
 				return true;
 			}
-			else if(sLine=="ini test")//åˆå§‹åŒ–
+			else if(sLine=="ini test")//³õÊ¼»¯
 			{
 				double *apdouble=0;
 				m_parser.DefineOrgClass("double",apdouble);
