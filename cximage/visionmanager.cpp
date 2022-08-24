@@ -1,3 +1,52 @@
+/****************************************************************************
+**
+** Copyright (C) 2016 The Qt Company Ltd.
+** Contact: https://www.qt.io/licensing/
+**
+** This file is part of the demonstration applications of the Qt Toolkit.
+**
+** $QT_BEGIN_LICENSE:BSD$
+** Commercial License Usage
+** Licensees holding valid commercial Qt licenses may use this file in
+** accordance with the commercial license agreement provided with the
+** Software or, alternatively, in accordance with the terms contained in
+** a written agreement between you and The Qt Company. For licensing terms
+** and conditions see https://www.qt.io/terms-conditions. For further
+** information use the contact form at https://www.qt.io/contact-us.
+**
+** BSD License Usage
+** Alternatively, you may use this file under the terms of the BSD license
+** as follows:
+**
+** "Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions are
+** met:
+**   * Redistributions of source code must retain the above copyright
+**     notimagesizeice, this list of conditions and the following disclaimer.
+**   * Redistributions in binary form must reproduce the above copyright
+**     notice, this list of conditions and the following disclaimer in
+**     the documentation and/or other materials provided with the
+**     distribution.
+**   * Neither the name of The Qt Company Ltd nor the names of its
+**     contributors may be used to endorse or promote products derived
+**     from this software without specific prior written permission.
+**
+**
+** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+**
+** $QT_END_LICENSE$
+**
+****************************************************************************/
 
 #include <qevent.h>
 #include <QPainter>
@@ -20,6 +69,16 @@
 #include "shapecommands.h"
 
 #include "shapebase.h"
+#include "findline.h"
+#include "findobject.h"
+#include "fastmatch.h"
+#include "orc.h"
+#include "stringai.h"
+#include "grid.h"
+#include "gridobject.h"
+#include"imagecodeparser.h"
+#include"imagelist.h"
+#include"imageroi.h"
 #include "backimagemanager.h"
 #include "FuSMAIControl.h"//statemachine
 
@@ -123,9 +182,10 @@ QByteArray loadfilestring(const QString& file)
 /******************************************************************************
 ** visionmanager
 */
-
+QElapsedTimer visionmanager::g_runelapsed;
+int visionmanager::g_showdebug=0;
 visionmanager::visionmanager(QWidget *parent)
-    : QWidget(parent),// m_currentIndex(-1),      m_mousePressIndex(-1),
+    : QOpenGLWidget(parent),// m_currentIndex(-1),      m_mousePressIndex(-1),
       m_resizeHandlePressed(false),
       m_pcurshape(0),
       m_pmousepressshape(0),
@@ -133,36 +193,64 @@ visionmanager::visionmanager(QWidget *parent)
         m_dmovy(0),
     m_dangle(0),
     m_dzoomx(1),
-    m_dzoomy(1)
+    m_dzoomy(1),
+    m_flashview(0),
+    m_lcalnum(0),
+    m_lflashecalnum(0),
+    m_beditmanagerview(false),
+    m_bcloseflash(true)
 {
 
     m_undoStack = new QUndoStack(this);
-
     m_FSMControl = new FuSMAIControl();
-
     setAutoFillBackground(true);
     setBackgroundRole(QPalette::Base);
 
+    m_imageparser.ParserInitialClassFunction(0);
+    m_imageparser.SetStream(&m_os);
+    m_imageparser.SetCreateCodeStream(&m_createcodeos);
 }
 visionmanager::~visionmanager()
 {
+   runstringcode("acam1.closedevice(0);");
+
+   clearparserobject();
+
    delete m_undoStack ;
 
    delete m_FSMControl ;
 
 }
-void visionmanager::initialparser()
+QString visionmanager::initialparser()
 {
-    m_imageparser.ParserInitialClassFunction(0);
-    m_imageparser.SetStream(&m_os);
-    m_imageparser.SetCreateCodeStream(&m_createcodeos);
 
-    m_imageparser.Compile("Module accd1;");
+
+    QString qrt;
+    bool bresult = m_imageparser.Compile("Module accd1;");
+    if(!bresult)
+    {
+        qrt=qrt+"build Module fail!\r\n";
+        qrt=qrt+getoutputstring();
+    }
+    else
+    {
+        qrt=qrt+"build Module ok\r\n";
+    }
+    clearos();
     //load module
     QString strfile = getlocationstringa("./static.cxsc");
     QString strcode = loadfilestring(strfile);
-    m_imageparser.Compile(strcode.toStdString().c_str());
-
+    bresult = m_imageparser.Compile(strcode.toStdString().c_str());
+    if(!bresult)
+    {
+        qrt=qrt+"build "+strfile+" fail!\r\n";
+        qrt=qrt+getoutputstring();
+    }
+    else
+    {
+        qrt=qrt+"build "+strfile+" ok\r\n";
+    }
+    clearos();
     //load roi ini
     m_strROIlist.clear();
     QStringList files;
@@ -179,14 +267,33 @@ void visionmanager::initialparser()
         QString strfile = getlocationstringa("./"+getfilename);
         m_strcode = loadfilestring(strfile);
 
-        m_imageparser.Compile(m_strcode.toStdString().c_str());
+        bresult = m_imageparser.Compile(m_strcode.toStdString().c_str());
+        if(!bresult)
+        {
+            qrt=qrt+"build "+getfilename+" fail!\r\n";
+            qrt=qrt+getoutputstring();
+        }
+        else
+        {
+            qrt=qrt+"build "+getfilename+" ok\r\n";
+        }
+        clearos();
     }
 
     //load module
     strfile = getlocationstringa("./autocreate.cxsc");
     strcode = loadfilestring(strfile);
-    m_imageparser.Compile(strcode.toStdString().c_str());
-
+    bresult = m_imageparser.Compile(strcode.toStdString().c_str());
+    if(!bresult)
+    {
+        qrt=qrt+"build "+strfile+" fail!\r\n";
+        qrt=qrt+getoutputstring();
+    }
+    else
+    {
+        qrt=qrt+"build "+strfile+" ok\r\n";
+    }
+    clearos();
  /*
     strfile = getlocationstringx("./run.cxut");
     m_strcode = loadfilestring(strfile);
@@ -200,7 +307,7 @@ void visionmanager::initialparser()
     m_strcode = loadfilestring(strfile);
     collectionstringopt(m_strcode.toStdString().c_str(),"main");
  */
-    OperationEngine();
+    qrt=qrt+OperationEngine();
     stringaioperation();
     strfile = getlocationstringa("./main.cxut");
     m_strcode = loadfilestring(strfile);
@@ -209,11 +316,61 @@ void visionmanager::initialparser()
     for(int i=0;i<m_imageparser.GetClassObjSum("Image");i++)
     {
         ImageBase* pimage = (ImageBase*)m_imageparser.GetClassObj("Image",i);
-        QSize imagesize(1600,1200);//(1024,768);
-        if(pimage)
+        QSize imagesize(3072,2048);//(1600,1200);//(1024,768);
+        if(nullptr!=pimage)
             *pimage=ImageBase(imagesize, QImage::Format_ARGB32_Premultiplied);
     }
 
+    ImageList* pshowimagelist = nullptr ;
+    if(m_imageparser.GetClassObjSum("ImageList")>0)
+    {
+         pshowimagelist=(ImageList*)m_imageparser.GetClassObj("ImageList",0);
+        for(int i=0;i<pshowimagelist->size();i++)
+        {
+            ImageBase* pimage0 = pshowimagelist->getimage(i);
+            QSize imagesize(3072,2048);
+            if(nullptr!=pimage0)
+                *pimage0=ImageBase(imagesize, QImage::Format_ARGB32_Premultiplied);
+        }
+    }
+    m_dzoomx = GetParserValue("m_dzoomx");
+    m_dzoomy = GetParserValue("m_dzoomy");
+    if(0.0==m_dzoomx)
+        m_dzoomx = 1;
+    if(0.0==m_dzoomy)
+        m_dzoomy = 1;
+    return qrt;
+}
+void visionmanager::clearparserobject()
+{
+
+    m_imageparser.ClearAll();
+}
+void visionmanager::resetparser()
+{
+
+    clearparserobject();
+    initialparser();
+
+}
+void visionmanager::cameracalib(const QString& qnamecalib)
+{
+
+    clearos();
+    //load module
+    QString qrt;
+    QString strfile = getlocationstringa("./calib/"+qnamecalib+".cxsc");
+    QString strcode = loadfilestring(strfile);
+    bool bresult = m_imageparser.Compile(strcode.toStdString().c_str());
+    if(!bresult)
+    {
+        qrt=qrt+"build "+strfile+" fail!\r\n";
+        qrt=qrt+getoutputstring();
+    }
+    else
+    {
+        qrt=qrt+"build "+strfile+" ok\r\n";
+    }
 }
 //////////////////////////////////////////////////////////////////////////
 void visionmanager::stringaioperation()
@@ -239,8 +396,9 @@ void visionmanager::stringaioperation()
   }
 
 }
-void visionmanager::OperationEngine()
+QString visionmanager::OperationEngine()
 {
+    QString qstr;
     m_stcnxutlist.clear();
     m_stcxutlist.clear();
     m_FSMControl->Init();
@@ -263,7 +421,7 @@ void visionmanager::OperationEngine()
 
         QString strfile = getlocationstringa("./"+getfilename);
         m_strcode = loadfilestring(strfile);
-        collectionstringopt(m_strcode.toStdString().c_str(),afile.completeBaseName().toStdString().c_str());
+       qstr = qstr + collectionstringopt(m_strcode.toStdString().c_str(),afile.completeBaseName().toStdString().c_str());
     }
     emit OperationModelList(m_stcxutlist);
 
@@ -302,7 +460,7 @@ void visionmanager::OperationEngine()
 
         QString strfile = getlocationstringa("./"+getfilename);
         m_strcode = loadfilestring(strfile);
-        collectionstringopt(m_strcode.toStdString().c_str(),afile.completeBaseName().toStdString().c_str());
+        qstr = qstr + collectionstringopt(m_strcode.toStdString().c_str(),afile.completeBaseName().toStdString().c_str());
 
     }
     //m_iloadengcodeok = 1;
@@ -310,7 +468,7 @@ void visionmanager::OperationEngine()
 
     //////////////////////////////////////////////////////////////////
     //set statemachine
-
+    return qstr;
 
 }
 void visionmanager::savefilestring(const QString& fn)
@@ -338,6 +496,30 @@ void visionmanager::saveconnectstring()
     //m_curparserstring = m_curstateparserstring;
     savefilestring(qfile);
     //CompileCodeToOpt(m_curparserstring);
+}
+void visionmanager::savecalibfile()
+{
+    QString qfile = getlocationstringa(QString("./"))+QString("/calib.cxut");
+   // savefilestring(qfile);
+ clearcreateos();
+    QString qstrcreate;
+    m_imageparser.GetImageObjectAutoSave();
+    qstrcreate=(m_createcodeos.str().c_str());
+    clearcreateos();
+
+   // QString qfile =  getlocationstringa(QString("./"))+QString("/autocreate.cxsc");
+
+    QFile f(qfile);
+
+    if ( !f.open(QFile::ReadWrite) )
+    {
+        return;
+    }
+
+    f.write(qstrcreate.toStdString().c_str());
+    f.close();
+
+
 }
 void visionmanager::loadstatestring()
 {
@@ -410,6 +592,20 @@ QStringList visionmanager::findFiles(const QStringList &files, const QString &te
         }
     }
     return foundFiles;
+}
+void visionmanager::editviewenable()
+{
+    if(false==m_beditmanagerview)
+        m_beditmanagerview=true;
+    else
+        m_beditmanagerview=false;
+}
+void visionmanager::closeflash()
+{
+    if(false==m_bcloseflash)
+        m_bcloseflash=true;
+    else
+        m_bcloseflash=false;
 }
 
 void visionmanager::SetOptStateName(const QString &statename)
@@ -570,6 +766,17 @@ StringAI *visionmanager::getstringai()
     return pstringai;
 
 }
+QString visionmanager::getcodeparsernumstring(int inum)
+{
+   QString strc = tr("acode%1").arg(inum);
+    imagecodeparser *pacode = (imagecodeparser*)m_imageparser.GetClassObj("imagecodeparser",strc.toLatin1().data());
+    return pacode->result();
+}
+QString visionmanager::getcodeparserstring()
+{
+    imagecodeparser *pacode = (imagecodeparser*)m_imageparser.GetClassObj("imagecodeparser","acode");
+    return pacode->result();
+}
 void visionmanager::setShapeColor(const QString &shapeName, const QColor &color)
 {
 
@@ -677,6 +884,26 @@ QShape* visionmanager::indexAt(const QPoint &pos)
             if(pshape->show())
             return pshape;
     }
+    isize =m_imageparser.GetClassObjSum("Imageroi");
+    for(int i=0;i<isize;i++)
+    {
+        QShape* pshape = (QShape*)m_imageparser.GetClassObj("Imageroi",i);
+
+        if (pshape->rect().contains(pos))
+            if(pshape->show())
+            return pshape;
+    }
+    isize =m_imageparser.GetClassObjSum("imagecodeparser");
+    for(int i=0;i<isize;i++)
+    {
+        QShape* pshape = (QShape*)m_imageparser.GetClassObj("imagecodeparser",i);
+
+        if (pshape->rect().contains(pos))
+            if(pshape->show())
+            return pshape;
+    }
+
+
     isize =m_imageparser.GetClassObjSum("gridobject");
     for(int i=0;i<isize;i++)
     {
@@ -712,32 +939,48 @@ QShape* visionmanager::indexAt(const QPoint &pos)
 
 void visionmanager::mousePressEvent(QMouseEvent *event)
 {
-    event->accept();
-    QShape* pshape = indexAt(event->pos());
+
+    if(false==m_beditmanagerview)
+            return;
+    mutexupdate();
+    event->accept();//m_dzoomx, m_dzoomy
+    double dx=(event->pos().x()/m_dzoomx)-m_dmovx;
+    double dy=(event->pos().y()/m_dzoomy)-m_dmovy;
+    QPoint curpos(dx,dy);
+
+    QShape* pshape = indexAt(curpos);//event->pos());
     if (pshape != 0)
     {
         setCurrentShape(pshape);
-
-        m_resizeHandlePressed = pshape->resizeHandle().contains(event->pos());
+        m_resizeHandlePressed = pshape->resizeHandlez(m_dzoomx,m_dzoomy).contains(curpos);
 
         if (m_resizeHandlePressed)
-            m_mousePressOffset = pshape->rect().bottomRight() - event->pos();
+            m_mousePressOffset = pshape->rect().bottomRight() - curpos;
         else
-            m_mousePressOffset = event->pos() - pshape->rect().topLeft();
+            m_mousePressOffset = curpos - pshape->rect().topLeft();
     }
     m_pmousepressshape = pshape;
 }
 
 void visionmanager::mouseReleaseEvent(QMouseEvent *event)
 {
+
+    if(false==m_beditmanagerview)
+            return;
     event->accept();
     m_pmousepressshape = 0;
 
+    mutexupdate();
 }
 
 void visionmanager::mouseMoveEvent(QMouseEvent *event)
 {
+    if(false==m_beditmanagerview)
+            return;
     event->accept();
+    double dx=(event->pos().x()/m_dzoomx)-m_dmovx;
+    double dy=(event->pos().y()/m_dzoomy)-m_dmovy;
+    QPoint curpos(dx,dy);
 
     if (m_pmousepressshape == 0)
         return;
@@ -746,99 +989,279 @@ void visionmanager::mouseMoveEvent(QMouseEvent *event)
 
     QRect rect;
     if (m_resizeHandlePressed) {
-        rect = QRect(shape.rect().topLeft(), event->pos() + m_mousePressOffset);
+        rect = QRect(shape.rect().topLeft(), curpos + m_mousePressOffset);
     } else {
         rect = shape.rect();
-        rect.moveTopLeft(event->pos() - m_mousePressOffset);
+        rect.moveTopLeft(curpos - m_mousePressOffset);
     }
 
     QSize size = rect.size().expandedTo(QShape::minSize);
     rect.setSize(size);
 
-     m_pmousepressshape->setrect(rect.x(),rect.y(),rect.width(),rect.height());
+    m_pmousepressshape->setrect(rect.x(),rect.y(),rect.width(),rect.height());
 
-    update();
-
-  //  m_undoStack->push(new SetShapeRectCommand(this, shape.name(), rect));
-}
+ mutexupdate();
+ }
 
 void visionmanager::paintEvent(QPaintEvent *event)
 {
-
-    QMutexLocker locker(&m_runmutex);
-    //image show
-    ImageBase* pshowimage = 0 ;
-    for(int i=0;i<m_imageparser.GetClassObjSum("Image");i++)
+    if(true==m_bcloseflash)
+            return;
+    switch(m_flashview)
     {
-        ImageBase* pimage = (ImageBase*)m_imageparser.GetClassObj("Image",i);
-        if(pimage->getshow()==1)
-           pshowimage=pimage;
+        case 1:
+        {
+            m_flashelapsed.start();
+            QMutexLocker locker(&m_runmutex);
+            m_flashview = 0;
+            //image show
+            ImageBase* pshowimage = nullptr ;
+            for(int i=0;i<m_imageparser.GetClassObjSum("Image");i++)
+            {
+                ImageBase* pimage = (ImageBase*)m_imageparser.GetClassObj("Image",i);
+                if(pimage->getshow()==1)
+                   pshowimage=pimage;
+            }
+            //imagelist show
+            ImageList* pshowimagelist = nullptr ;
+            if(m_imageparser.GetClassObjSum("ImageList")>0)
+            {
+                 pshowimagelist=(ImageList*)m_imageparser.GetClassObj("ImageList",0);
+                int ishow = pshowimagelist->getshow();
+                if(ishow>=0&&ishow<100)
+                {
+                    ImageBase* pimage0 = pshowimagelist->getimage(ishow);
+                    if(nullptr!=pimage0)
+                       pshowimage=pimage0;
+                }
+                else if(100==ishow)
+                {
+                    int ilistnum=0;
+                    QPainter painter(this);
+                    painter.translate(m_dmovx, m_dmovy);
+                    painter.rotate(m_dangle);
+                    painter.scale(m_dzoomx, m_dzoomy);
+                    for (int y = 0; y <600; y += 100)
+                    {
+                        for (int x = 0; x < 900; x += 180)
+                        {
+
+                            if(ilistnum<pshowimagelist->size())
+                            {
+                                ImageBase* pimage0 = pshowimagelist->getimage(ilistnum);
+                                ilistnum=ilistnum+1;
+                                if(pimage0!=nullptr)
+                                    pimage0->drawx(painter,x, y,0,0.1, 0.1);
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+
+            QRegion paintRegion = event->region();
+            QPainter painter(this);
+//          painter.save();
+//          painter.translate(m_dmovx, m_dmovy);
+//          painter.rotate(m_dangle);
+//          painter.scale(m_dzoomx, m_dzoomy);
+            if(1)
+            {
+                if(0!=pshowimage)
+                {
+                   // pshowimage->draw(painter);
+                    pshowimage->drawx(painter,m_dmovx, m_dmovy,m_dangle,m_dzoomx, m_dzoomy);
+                }
+                if(false==m_beditmanagerview)
+                        return;
+                painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+                for(int i=0;i<m_imageparser.GetClassObjSum("Module");i++)
+                {
+                    BackImageManager* pmodule = (BackImageManager*)m_imageparser.GetClassObj("Module",i);
+                    if(pmodule->show()>0)
+                       pmodule->draw(painter);
+                }
+                QPalette pal = palette();
+                for(int i=0;i<m_imageparser.GetClassObjSum("ShapeBase");i++)
+                {
+                    ShapeBase* pshapebase = (ShapeBase*)m_imageparser.GetClassObj("ShapeBase",i);
+
+                    if(pshapebase->show()>0)
+                        pshapebase->drawshape(painter);
+                }
+                //draw lineshape
+                for(int i=0;i<m_imageparser.GetClassObjSum("LineShape");i++)
+                {
+                    LineShape* plineshape = (LineShape*)m_imageparser.GetClassObj("LineShape",i);
+                    QPoint apoint = plineshape->getline().p1();
+                    QPoint bpoint = plineshape->getline().p2();
+                    if (!paintRegion.contains(QRect(apoint,bpoint)))
+                        continue;
+                    if(plineshape->show()>0)
+                        plineshape->drawshape(painter);
+                }
+                //draw pointshape
+                for(int i=0;i<m_imageparser.GetClassObjSum("PointsShape");i++)
+                {
+                    PointsShape* pshape = (PointsShape*)m_imageparser.GetClassObj("PointsShape",i);
+
+                    if(pshape->show()>0)
+                        pshape->drawshape(painter);
+                }
+                //draw shape and object
+                for(int i=0;i<m_imageparser.GetClassObjSum("Shape");i++)
+                {
+                    QShape* pshape = (QShape*)m_imageparser.GetClassObj("Shape",i);
+                    if (!paintRegion.contains(pshape->rect()))
+                        continue;
+                    if(pshape->show()>0)
+                        pshape->drawshapex(painter,pal,
+                                           m_dmovx,m_dmovy,
+                                           m_dangle,
+                                           m_dzoomx,m_dzoomy);
+                }
+                //draw findline
+                for(int i=0;i<m_imageparser.GetClassObjSum("findline");i++)
+                {
+                    findline* pfind = (findline*)m_imageparser.GetClassObj("findline",i);
+
+                    if (!paintRegion.contains(pfind->rect()))
+                        continue;
+                    if(pfind->show()>0)
+                        pfind->drawshapex(painter,pal,
+                                         m_dmovx,m_dmovy,
+                                         m_dangle,
+                                         m_dzoomx,m_dzoomy);
+                }
+                //draw findobject
+                for(int i=0;i<m_imageparser.GetClassObjSum("findobject");i++)
+                {
+                    findobject* pfind = (findobject*)m_imageparser.GetClassObj("findobject",i);
+
+                    if(pfind->show()>0)
+                         pfind->drawshapex(painter,pal,
+                                           m_dmovx,m_dmovy,
+                                           m_dangle,
+                                           m_dzoomx,m_dzoomy);
+                }
+                //draw imageroi
+                for(int i=0;i<m_imageparser.GetClassObjSum("Imageroi");i++)
+                {
+                    ImageROI* proi = (ImageROI*)m_imageparser.GetClassObj("Imageroi",i);
+
+                    if(proi->show()>0)
+                         proi->drawshapex(painter,pal,
+                                           m_dmovx,m_dmovy,
+                                           m_dangle,
+                                           m_dzoomx,m_dzoomy);
+                }
+                //draw imagecodeparser
+                for(int i=0;i<m_imageparser.GetClassObjSum("imagecodeparser");i++)
+                {
+                     imagecodeparser* pcode = (imagecodeparser*)m_imageparser.GetClassObj("imagecodeparser",i);
+
+                    if(pcode->show()>0)
+                         pcode->drawshapex(painter,
+                                           pal,
+                                           m_dmovx,m_dmovy,
+                                           m_dangle,
+                                           m_dzoomx,m_dzoomy);
+                }
+                for(int i=0;i<m_imageparser.GetClassObjSum("gridobject");i++)
+                {
+                    gridobject* pfind = (gridobject*)m_imageparser.GetClassObj("gridobject",i);
+
+                    if (!paintRegion.contains(pfind->rect()))
+                        continue;
+                    if(pfind->show()>0)
+                        pfind->drawshapex(painter,
+                                          pal,
+                                          m_dmovx,m_dmovy,
+                                          m_dangle,
+                                          m_dzoomx,m_dzoomy);
+                }
+                for(int i=0;i<m_imageparser.GetClassObjSum("fastmatch");i++)
+                {
+                    fastmatch* pfind = (fastmatch*)m_imageparser.GetClassObj("fastmatch",i);
+
+                    //if (!paintRegion.contains(pfind->rect()))
+                    //    continue;
+                    if(pfind->show()>0)
+                        pfind->drawshapex(painter,pal,m_dmovx, m_dmovy,m_dangle,m_dzoomx, m_dzoomy);
+                }
+                for(int i=0;i<m_imageparser.GetClassObjSum("easyorc");i++)
+                {
+                    QEasyORC* pfind = (QEasyORC*)m_imageparser.GetClassObj("easyorc",i);
+
+                    if (!paintRegion.contains(pfind->rect()))
+                        continue;
+                    if(pfind->show()>0)
+                        pfind->drawshapex(painter,
+                                          pal,
+                                          m_dmovx,m_dmovy,
+                                          m_dangle,
+                                          m_dzoomx,m_dzoomy);
+                }
+                for(int i=0;i<m_imageparser.GetClassObjSum("grid");i++)
+                {
+                    QGrid* pgrid = (QGrid*)m_imageparser.GetClassObj("grid",i);
+
+                    if(pgrid->show()>0)
+                        pgrid->drawshape(painter);
+                }
+            }
+//          painter.restore();
+//          m_lflashecalnum++;
+//          m_os << "================flash:"<<m_lflashecalnum<<" elapsed: " << (int)m_flashelapsed.restart() << " ms============\r\n";
+        }
+        break;
+        case 2:
+        {
+            m_flashview = 0;
+            //image show
+            QRegion paintRegion = event->region();
+            QPainter painter(this);
+            if(1)
+            {
+                ImageBase* pshowimage = 0 ;
+                for(int i=0;i<m_imageparser.GetClassObjSum("Image");i++)
+                {
+                    ImageBase* pimage = (ImageBase*)m_imageparser.GetClassObj("Image",i);
+                    if(pimage->getshow()==1)
+                       pshowimage=pimage;
+                }
+                if(0!=pshowimage)
+                {
+                    pshowimage->draw(painter);
+                }
+            }
+
+            painter.save();
+            painter.translate(0, 0);
+            painter.scale(0.1, 0.1);
+            QRectF exposed = painter.matrix().inverted().mapRect(rect()).adjusted(-1, -1, 1, 1);
+            painter.drawPixmap(exposed, m_pixmap, exposed);
+            painter.restore();
+
+
+
+
+
+    }
+        break;
+        case 3://default:
+            ImageBase* pshowimage  = (ImageBase*)m_imageparser.GetClassObj("Image","aimage2");
+            QRegion paintRegion = event->region();
+            QPainter painter(this);
+            painter.translate(m_dmovx, m_dmovy);
+            painter.rotate(m_dangle);
+            painter.scale(m_dzoomx, m_dzoomy);
+            pshowimage->draw(painter);
+            break;
     }
 
-    QRegion paintRegion = event->region();
-    QPainter painter(this);
-
-
-        painter.save();
-        painter.translate(m_dmovx, m_dmovy);
-        painter.rotate(m_dangle);
-        painter.scale(m_dzoomx, m_dzoomy);
-
-
-        if(1)
-        {
-            if(0!=pshowimage)
-            {
-                pshowimage->draw(painter);
-            }
-
-            painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-
-            for(int i=0;i<m_imageparser.GetClassObjSum("Module");i++)
-            {
-                BackImageManager* pmodule = (BackImageManager*)m_imageparser.GetClassObj("Module",i);
-                if(pmodule->show()>0)
-                   pmodule->draw(painter);
-            }
-
-            QPalette pal = palette();
-
-           // ShapeBase* pshapebase = 0 ;
-            for(int i=0;i<m_imageparser.GetClassObjSum("ShapeBase");i++)
-            {
-                ShapeBase* pshapebase = (ShapeBase*)m_imageparser.GetClassObj("ShapeBase",i);
-
-                if(pshapebase->show()>0)
-                    pshapebase->drawshape(painter);
-            }
-            //draw lineshape
-            for(int i=0;i<m_imageparser.GetClassObjSum("LineShape");i++)
-            {
-                LineShape* plineshape = (LineShape*)m_imageparser.GetClassObj("LineShape",i);
-                QPoint apoint = plineshape->getline().p1();
-                QPoint bpoint = plineshape->getline().p2();
-                if (!paintRegion.contains(QRect(apoint,bpoint)))
-                    continue;
-                if(plineshape->show()>0)
-                    plineshape->drawshape(painter);
-            }
-            //draw shape and object
-          //QShape* pshape = 0 ;
-            for(int i=0;i<m_imageparser.GetClassObjSum("Shape");i++)
-            {
-                QShape* pshape = (QShape*)m_imageparser.GetClassObj("Shape",i);
-
-                if (!paintRegion.contains(pshape->rect()))
-                    continue;
-                if(pshape->show()>0)
-                    pshape->drawshape(painter,pal);
-            }
-
-        }
-
-        painter.restore();
-
 }
+
 void visionmanager::setCurrentShape(QShape *pshape)
 {
     QString currentName;
@@ -916,20 +1339,20 @@ void visionmanager::saveeditcode(const char *pcodes,const char *filenames)
 }
 void visionmanager::runoptcode(const char *optstr)
 {
-     QMutexLocker locker(&m_runmutex);
-
-m_elapsed.start();
-
+   //  QMutexLocker locker(&m_runmutex);
+    clearos();
+    m_elapsed.start();
+    if(g_showdebug)
     qDebug() << QString("runopt :")+QString(optstr);
 
-    clearos();
-    runopt(QString(optstr));
+
+    //runopt(QString(optstr));
 
     m_imageparser.RunOptString(optstr);
 
-    runoptover(QString(optstr));
+   // runoptover(QString(optstr));
 
-qDebug("elapsed %lld ms", m_elapsed.restart());
+//qDebug("elapsed %lld ms", m_elapsed.restart());
 
 }
 
@@ -943,46 +1366,67 @@ void visionmanager::autorunstringcode(const char *optstr)
     QMutexLocker locker(&m_runmutex);
     m_elapsed.start();
     m_imageparser.Compile(optstr);
-    qDebug("elapsed %lld ms", m_elapsed.restart());
+   // qDebug("elapsed %lld ms", m_elapsed.restart());
 }
 void visionmanager::runstringcode(const char *optstr)
 {
-    QMutexLocker locker(&m_runmutex);
-
+ //   QMutexLocker locker(&m_runmutex);
 
     m_elapsed.start();
 
-    m_imageparser.Compile(optstr);
-
+   m_imageparser.Compile(optstr);
    // qDebug("elapsed %lld ms", m_elapsed.restart());
+    m_lcalnum++;
+   m_os << "================run:"<<m_lcalnum<<" elapsed: " << (int)m_elapsed.restart() << " ms============\r\n";
+//m_os << "================total elapsed: " << (int)visionmanager::g_runelapsed.restart() << " ms============\r\n";
 
-    m_os << "================elapsed: " << (int)m_elapsed.restart() << " ms============\r\n";
 }
 void visionmanager::runstringcodex(const char *optstr)
 {
     QMutexLocker locker(&m_runmutex);
     m_elapsed.start();
     m_imageparser.Compile(optstr);
-    qDebug("elapsed %lld ms", m_elapsed.restart());
+  //qDebug("elapsed %lld ms", m_elapsed.restart());
 }
 
 void visionmanager::mutexupdate()
 {
+    m_flashview = 1;
         update();
 }
-void visionmanager::collectionstringopt(const char *optcode,const char *optstrname)
+void visionmanager::flashview()
 {
 
+   m_flashview = 1;
+      update();
+        return;
+  //  m_flashview = 2;
+  //  ImageBase* pimage = (ImageBase*)m_imageparser.GetClassObj("Image","aimageshow");
+  //  m_pixmap = QPixmap::fromImage(*pimage);
+  //  update();
+}
+QString visionmanager::collectionstringopt(const char *optcode,const char *optstrname)
+{
     m_imageparser.SetOptCollect(true);
+QString qrt;
+   bool bresult = m_imageparser.Compile(optcode);
 
-    m_imageparser.Compile(optcode);
-
+    if(!bresult)
+    {
+        qrt=qrt+"build "+optstrname+" fail!\r\n";
+        qrt=qrt+getoutputstring();
+    }
+    else
+    {
+        qrt=qrt+"build "+optstrname+" ok\r\n";
+    }
+    clearos();
     m_imageparser.SetOptCollect(false);
 
     m_imageparser.SetRunOpt(optstrname);
 
-    qDebug() << QString("<-collectionstringopt :")+QString(optstrname);
-
+ //   qDebug() << QString("<-collectionstringopt :")+QString(optstrname);
+    return qrt;
 }
 void visionmanager::trigger(const QImage& imginput)
 {
@@ -995,16 +1439,13 @@ void visionmanager::trigger(const QImage& imginput)
 void visionmanager::resizeEvent(QResizeEvent *e)
 {
     QWidget::resizeEvent(e);
+    m_flashview = 1;
     update();
 }
 void visionmanager::setimageframe(QImage& imginput)
 {
-
-
     ImageBase* pimage = (ImageBase*)m_imageparser.GetClassObj("Image","aimage");
-
     imginput = imginput.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-
     QImage resultImage = imginput;
     QPainter painter(&resultImage);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
@@ -1036,10 +1477,31 @@ void visionmanager::setimage(QImage& imginput)
     double dvaluef = GetParserValue("df");
     dvaluef = dvaluef + 1;
     SetParserValue("df",dvaluef);
+//    qDebug() << "setimage";
 
 }
+void visionmanager::setimagelist(QImage& imginput)
+{
+    ImageList* plist = (ImageList*)m_imageparser.GetClassObj("ImageList","alist");
+
+    ImageBase* pimagebase= (ImageBase*)(plist->nextimage());
+    imginput = imginput.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+
+    *pimagebase = imginput;
+
+    double dvaluef = GetParserValue("df");
+    dvaluef = dvaluef + 1;
+    SetParserValue("df",dvaluef);
+//    qDebug() << "setimage";
+
+}
+
+
 void visionmanager::saveautocreate()
 {
+     SetParserValue("m_dzoomx",m_dzoomx);
+     SetParserValue("m_dzoomy",m_dzoomy);
+
     QString qstrcreate;
     m_imageparser.GetImageObjectAutoSave();
     qstrcreate=(m_createcodeos.str().c_str());
@@ -1092,12 +1554,12 @@ visionView::visionView(const QString &name, QFrame *parent)
     graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 */
     manageView = new visionmanager(this);
-    manageView->setMinimumHeight(2700);
+    manageView->setMinimumHeight(3600);
     manageView->setMinimumWidth(3600);
 
     m_scrollArea = new QScrollArea;
-    m_scrollArea->setMinimumHeight(640);
-    m_scrollArea->setMinimumWidth(800);
+    m_scrollArea->setMinimumHeight(800);
+    m_scrollArea->setMinimumWidth(500);
 
 
     m_scrollArea->setBackgroundRole(QPalette::Dark);
@@ -1124,7 +1586,7 @@ visionView::visionView(const QString &name, QFrame *parent)
     zoomSlider->setMinimum(0);
     zoomSlider->setMaximum(500);
     zoomSlider->setValue(250);
-    zoomSlider->setTickPosition(QSlider::TicksRight);
+    zoomSlider->setTickPosition(QSlider::TicksLeft);//TicksRight
 
     // Zoom slider layout
     QVBoxLayout *zoomSliderLayout = new QVBoxLayout;
@@ -1208,10 +1670,10 @@ visionView::visionView(const QString &name, QFrame *parent)
     connect(resetButton, SIGNAL(clicked()), this, SLOT(resetView()));
     connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(setupMatrix()));
     connect(rotateSlider, SIGNAL(valueChanged(int)), this, SLOT(setupMatrix()));
-//    connect(graphicsView->verticalScrollBar(), SIGNAL(valueChanged(int)),
-//            this, SLOT(setResetButtonEnabled()));
-//    connect(graphicsView->horizontalScrollBar(), SIGNAL(valueChanged(int)),
-//            this, SLOT(setResetButtonEnabled()));
+    connect(m_scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)),
+            this, SLOT(verticalScroll()));
+    connect(m_scrollArea->horizontalScrollBar(), SIGNAL(valueChanged(int)),
+            this, SLOT(horizontalScroll()));
     connect(selectModeButton, SIGNAL(toggled(bool)), this, SLOT(togglePointerMode()));
     connect(dragModeButton, SIGNAL(toggled(bool)), this, SLOT(togglePointerMode()));
     connect(antialiasButton, SIGNAL(toggled(bool)), this, SLOT(toggleAntialiasing()));
@@ -1220,7 +1682,7 @@ visionView::visionView(const QString &name, QFrame *parent)
     connect(rotateRightIcon, SIGNAL(clicked()), this, SLOT(rotateRight()));
     connect(zoomInIcon, SIGNAL(clicked()), this, SLOT(zoomIn()));
     connect(zoomOutIcon, SIGNAL(clicked()), this, SLOT(zoomOut()));
-    connect(printButton, SIGNAL(clicked()), this, SLOT(print()));
+ //   connect(printButton, SIGNAL(clicked()), this, SLOT(print()));
 
     setupMatrix();
 }
@@ -1230,6 +1692,7 @@ visionmanager *visionView::view() const
     return static_cast<visionmanager *>(manageView);
 }
 
+
 void visionView::resetView()
 {
     zoomSlider->setValue(250);
@@ -1238,7 +1701,7 @@ void visionView::resetView()
  //   manageView->ensureVisible(QRectF(0, 0, 0, 0));
     manageView->zoomin(1,1 );
     manageView->rotateangle(0);
-    manageView->update();
+    manageView->mutexupdate();
     resetButton->setEnabled(false);
 }
 
@@ -1255,6 +1718,7 @@ void visionView::setupMatrix()
     matrix.scale(scale, scale);
     matrix.rotate(rotateSlider->value());
 
+    manageView->mutexupdate();
 //    manageView->setMatrix(matrix);
     setResetButtonEnabled();
 }
@@ -1283,16 +1747,16 @@ void visionView::zoomIn(int level)
 {
     int icur = zoomSlider->value() + level -250;
     zoomSlider->setValue(zoomSlider->value() + level);
-    manageView->zoomin(1+icur*0.05,1+icur*0.05);
-    manageView->update();
+    manageView->zoomin(1+icur*0.01,1+icur*0.01);
+    manageView->mutexupdate();
 }
 
 void visionView::zoomOut(int level)
 {
     int icur = zoomSlider->value() - level -250;
     zoomSlider->setValue(zoomSlider->value() - level);
-    manageView->zoomin(1+icur*0.05,1+icur*0.05);
-    manageView->update();
+    manageView->zoomin(1+icur*0.01,1+icur*0.01);
+    manageView->mutexupdate();
 }
 
 void visionView::rotateLeft()
@@ -1300,7 +1764,7 @@ void visionView::rotateLeft()
     int ivalue = rotateSlider->value() - 1;
     rotateSlider->setValue(rotateSlider->value() - 1);
     manageView->rotateangle(ivalue);
-        manageView->update();
+        manageView->mutexupdate();
 }
 
 void visionView::rotateRight()
@@ -1308,5 +1772,16 @@ void visionView::rotateRight()
     int ivalue = rotateSlider->value() + 1;
     rotateSlider->setValue(rotateSlider->value() + 1);
     manageView->rotateangle(ivalue);
-        manageView->update();
+        manageView->mutexupdate();
+}
+
+void visionView::verticalScroll()
+{
+
+    manageView->mutexupdate();
+}
+void visionView::horizontalScroll()
+{
+
+    manageView->mutexupdate();
 }

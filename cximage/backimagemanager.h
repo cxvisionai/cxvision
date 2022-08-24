@@ -1,12 +1,12 @@
 #ifndef BACKIMAGEMANAGER_H
 #define BACKIMAGEMANAGER_H
 #include "imagebase.h"
-//#include "findobject.h"
+#include "findobject.h"
 #define  OBJSCANNNUM  1024*1024//307200//20480//20480//10240//
 #define  OBJCOLLECTIONNUM  1024*1024//307200//20480//20480
 
-#define BACKIMAGEWITH 1024
-#define BACKIMAGEHIGH 1024
+#define BACKIMAGEWITH 1600//1024
+#define BACKIMAGEHIGH 1200//1024
 
 #define TRANSFERIMAGEWITH 320
 #define TRANSFERIMAGEHIGH 320
@@ -32,9 +32,6 @@ static QColor g_color[16] =
     Qt::gray,
     Qt::lightGray
 };
-
-class findobject;
-
 class BackImageManager
 {
 public:
@@ -53,8 +50,8 @@ public:
     static ImageBase* m_pModelImage;
     static ImageBase* m_pTransferImage;
 
-    int m_ishow;
-    int m_iobjectshow;
+     int m_ishow;
+     int m_iobjectshow;
 
     void setshow(int ishow);
     void setobjectshow(int ishow);
@@ -131,6 +128,27 @@ public:
     static int g_b_table_thre;
 
     static int g_table_rate;
+
+    static QRootGrid *m_rootgridA;
+    static QRootGrid *m_rootgridA_;
+    static QRootGrid *m_rootgridB;
+    static QRootGrid *m_rootgridB_;
+
+    static void CreateRootGridA();
+    static QRootGrid* GetRootGridA(int curmodul=1);
+    static QRootGrid& RootGridA();
+
+    static void CreateRootGridA_();
+    static QRootGrid* GetRootGridA_(int curmodul=1);
+    static QRootGrid& RootGridA_();
+
+    static void CreateRootGridB();
+    static QRootGrid* GetRootGridB(int curmodul=1);
+    static QRootGrid& RootGridB();
+
+    static void CreateRootGridB_();
+    static QRootGrid* GetRootGridB_(int curmodul=1);
+    static QRootGrid& RootGridB_();
 
 };
 

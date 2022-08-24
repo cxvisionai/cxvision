@@ -46,7 +46,7 @@ public:
     QPixmap m_pixmap;
     int m_ishow;
     double m_dminpercent;
-
+    int m_ishowlines;
 
 public:
     ShapeBase();
@@ -61,14 +61,69 @@ public:
     void setAntialiased(int antialiased);
     void setTransformed(int transformed);
     void setPercent(double dvalue);
+
     virtual void drawshape(QPainter &painter);
     //list move
     virtual void Move(int ix,int iy){}
     virtual void Rotate(double iangle){}
     virtual void Zoom(double dx0,double dy0){}
-
+    virtual void setshowlines(int ilines){m_ishowlines=ilines;}
     virtual int getpointnum(){return 0;}
 };
+
+
+
+class QRootGrid;
+//背景 白 目标 黑
+//背景 黑 目标 白
+//A 横向 上白下黑
+//A_ 横向 上黑下白
+//B 纵向 左白右黑
+//B_ 纵向 左黑右白
+class QRootGrid:public ShapeBase
+{
+public:
+    QRootGrid();
+    ~QRootGrid();
+
+private:
+     //QMap<QPoint,QRootGrid> m_map ;
+     QList <QRootGrid> m_glist;
+     QList <QPoint> m_plist;
+
+     int m_ilevel;
+     int m_itype;//A=1,A_=2,B=4,B_=8
+     int m_iclasstype;
+     QString m_name;
+     QPoint m_point;
+
+public:
+     void release();
+     int level(){return m_ilevel;}
+     QString name(){return m_name;}
+     void setlevel(int id){m_ilevel =id;}
+     void setname(QString name){m_name = name;}
+     void settype(int itype){m_itype =itype;}
+     void setshow(int ishow){m_ishow=ishow;}
+     void addpoint(QPoint &apoint);
+
+     int getlevel();
+     void addrootpointlist(QList <QPoint> &keypoints,int itype);
+     void addpoint(QPoint &arootpoint,QPoint &apoint);
+
+     virtual void drawshape(QPainter &painter);
+     void drawgrid(QPainter &painter);
+     void drawlayer(QPainter &painter,int ilevel);
+     void gridclasstype();
+};
+
+
+
+
+
+
+
+
 class LineShape:public ShapeBase
 {
 public:
@@ -92,6 +147,7 @@ public:
     virtual void Rotate(double iangle);
     virtual void Zoom(double dx0,double dy0);
     virtual void setpenw(int iw);
+    virtual void setshowlines(int ilines){m_ishowlines=ilines;}
     LineShape& operator=(const  LineShape& aline);
 };
 
@@ -104,30 +160,50 @@ public:
     void addpoint(QPoint &apoint);
     void addpoint(QPointF &apoint);
     void addpoints(PointsShape &points);
+
+    void setshow(int ishow);
+    void addapoint(double apointx,double apointy);
+    void clear();
+    int size();
+    void calibration(double dx,double dy,double dangle);
+    double getx(int inum);
+    double gety(int inum);
+
     void addpoint(qreal &apointx,qreal &apointy);
     void addpointa(qreal &apointx,qreal &apointy);
     void addpointb(qreal &apointx,qreal &apointy);
+    void addText(qreal x, qreal y,QFont &f,QString &text);
     QRectF boundingRect();
     QRectF controlPointRect();
     void save(const char * pchar);
     void load(const char * pchar);
 
-
-
-    void clear();
     QPainterPath &getpath();
-    void onepartten(double igap,int idirect,PointsShape& apoints);
-    void doublepartten(double igap,int idirect,PointsShape& apoints);
+    void onepattern(double igap,int idirect,PointsShape& apoints);
+    void doublepattern(double igap,int idirect,PointsShape& apoints);
     void doublesample(int isamplerate,PointsShape& apoints);
+    void patterntokeys(QList <QPoint> &keypointsA,QList <QPoint> &keypointsA_,
+                       QList <QPoint> &keypointsB,QList <QPoint> &keypointsB_,
+                       int ibackgroundtype=0);
+    void keystopattern(QList <QPoint> &keypointsA,QList <QPoint> &keypointsA_,
+                       QList <QPoint> &keypointsB,QList <QPoint> &keypointsB_,
+                       int igap=2,int itype=1,int isgap =2,int iline=2);
+    void keyszoom(QList <QPoint> &keypointsA,QList <QPoint> &keypointsA_,
+                       QList <QPoint> &keypointsB,QList <QPoint> &keypointsB_,
+                  double dxz,double dyz);
+    void patterntranform(int igap,int itype,int isgap,int iline);
+    void patternzoom(double dxz,double dyz,int igap,int itype=0,int iline=1);
 
-    int size();
+    void keysrootgrid(int ibackgroundtype,double drate =0.25,int ilevel = 4);
+
+
     virtual void drawshape(QPainter &painter);
-
-
+    void drawshapex(QPainter &painter,double dmovx,double dmovy,
+                                double dangle,double dzoomx,double dzoomy);
     virtual void Move(int ix,int iy);
     virtual void Rotate(double dangle);
     virtual void Zoom(double dx0,double dy0);
-
+    virtual void setshowlines(int ilines){m_ishowlines=ilines;}
     virtual int getpointnum(){return 0;}
 };
 
@@ -151,18 +227,17 @@ public:
     void edgeimage(QImage &aImage,int itype);
     int size();
     virtual void drawshape(QPainter &painter);
-
-
     virtual void Move(int ix,int iy);
     virtual void Rotate(double dangle);
     virtual void Zoom(double dx0,double dy0);
-
+    virtual void setshowlines(int ilines){m_ishowlines=ilines;}
     virtual int getpointnum(){return 0;}
 };
 
 
 
 typedef QVector<QRect> RectVector;
+typedef QVector<double> AngleVector;
 enum RectDirction{
     inside_dir = 0,
     outside_dir = 1,
@@ -220,6 +295,7 @@ public:
     void setspecshow(int ishownum);
     void setrect(int inum,int ix,int iy,int iw,int ih);
     void setstring(int inum,const QString &str);
+    void setangle(int inum,double dangle);
     void removecontains_c();
 
     QRect comb(QRect &rect1,QRect &rect2);
@@ -227,16 +303,22 @@ public:
     RectDirction pos(QRect &rect1,QRect &rect2);
 
     void sort();
-
+    void drawshapex(QPainter &painter,
+                                double dmovx,
+                                double dmovy,
+                                double dangle,
+                                double dzoomx,
+                                double dzoomy);
     virtual void drawshape(QPainter &painter);
     virtual void Move(int ix,int iy);
     virtual void Rotate(double iangle);
     virtual void Zoom(double dx0,double dy0);
     virtual int getpointnum(){return 0;}
-
+    virtual void setshowlines(int ilines){m_ishowlines=ilines;}
 private:
     RectVector m_rects;
     QStringList m_strlist;
+    AngleVector m_angles;
     int m_ispecshow;
 };
 

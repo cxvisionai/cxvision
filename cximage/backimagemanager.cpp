@@ -1,4 +1,5 @@
 #include "backimagemanager.h"
+#include "findobject.h"
 
 ImageBase* BackImageManager::m_pBackImage = 0;
 ImageBase* BackImageManager::m_pBackObjectImage = 0;
@@ -27,6 +28,11 @@ int BackImageManager::g_b_table_thre = 0;
 
 int BackImageManager::g_table_rate = 0;
 
+QRootGrid *BackImageManager::m_rootgridA = 0;
+QRootGrid *BackImageManager::m_rootgridA_ = 0;
+QRootGrid *BackImageManager::m_rootgridB = 0;
+QRootGrid *BackImageManager::m_rootgridB_ = 0;
+
 BackImageManager::~BackImageManager()
 {
     if(NULL!=_thelistcollectorA)
@@ -39,12 +45,16 @@ BackImageManager::~BackImageManager()
         delete []_thelistscanorA;
         _thelistscanorA = NULL;
     }
+    m_imodulid = 0;
+
+    m_curmodul = 0;
+
 }
 void BackImageManager::setobjectshow(int ishow)
 {
     m_iobjectshow = ishow;
-//    if(0!=m_pfindobject)
-//        m_pfindobject->setshow(m_iobjectshow);
+    if(0!=m_pfindobject)
+        m_pfindobject->setshow(m_iobjectshow);
 }
 void BackImageManager::draw(QPainter &painter)
 {
@@ -82,8 +92,8 @@ void BackImageManager::draw(QPainter &painter)
     }
     else if(0x40==m_ishow)
     {
-//       QPalette apalette;
-//       m_pfindobject->drawshape(painter,apalette);
+        QPalette apalette;
+        m_pfindobject->drawshape(painter,apalette);
     }
 }
 void BackImageManager::drawtable(QPainter &painter)
@@ -360,8 +370,10 @@ findobject* BackImageManager::Getbackfindobject(int curmodul)
     {
         if(0==m_pfindobject)
         {
-//          static findobject _thefindobject;
-//          m_pfindobject = &_thefindobject;
+
+            static findobject _thefindobject;
+
+            m_pfindobject = &_thefindobject;
         }
         return m_pfindobject;
     }
@@ -411,3 +423,129 @@ qint64* BackImageManager::GetBtable(int curmodul)
             break;
     }
 }
+
+QRootGrid* BackImageManager::GetRootGridA(int curmodul)
+{
+    if(1==curmodul)
+    {
+        if(0==m_rootgridA)
+        {
+            CreateRootGridA();
+        }
+        return m_rootgridA;
+    }
+    else if(2==curmodul)
+    {
+
+    }
+    return 0;
+}
+void BackImageManager::CreateRootGridA()
+{
+    if(0!=m_rootgridA)
+        return;
+    QRootGrid &rootgrid = RootGridA();
+    m_rootgridA = &rootgrid;
+}
+QRootGrid& BackImageManager::RootGridA()
+{
+    static QRootGrid _therootgridA;
+    return _therootgridA;
+
+}
+
+QRootGrid* BackImageManager::GetRootGridA_(int curmodul)
+{
+    if(1==curmodul)
+    {
+        if(0==m_rootgridA_)
+        {
+            CreateRootGridA_();
+        }
+        return m_rootgridA_;
+    }
+    else if(2==curmodul)
+    {
+
+    }
+    return 0;
+}
+void BackImageManager::CreateRootGridA_()
+{
+    if(0!=m_rootgridA_)
+        return;
+    QRootGrid &rootgrid = RootGridA_();
+    m_rootgridA_ = &rootgrid;
+}
+QRootGrid& BackImageManager::RootGridA_()
+{
+    static QRootGrid _therootgridA_;
+    return _therootgridA_;
+
+}
+
+QRootGrid* BackImageManager::GetRootGridB(int curmodul)
+{
+    if(1==curmodul)
+    {
+        if(0==m_rootgridB)
+        {
+            CreateRootGridB();
+        }
+        return m_rootgridB;
+    }
+    else if(2==curmodul)
+    {
+
+    }
+    return 0;
+}
+void BackImageManager::CreateRootGridB()
+{
+    if(0!=m_rootgridB)
+        return;
+    QRootGrid &rootgrid = RootGridB();
+    m_rootgridB = &rootgrid;
+}
+QRootGrid& BackImageManager::RootGridB()
+{
+    static QRootGrid _therootgridB;
+    return _therootgridB;
+
+}
+
+
+QRootGrid* BackImageManager::GetRootGridB_(int curmodul)
+{
+    if(1==curmodul)
+    {
+        if(0==m_rootgridB_)
+        {
+            CreateRootGridB_();
+        }
+        return m_rootgridB_;
+    }
+    else if(2==curmodul)
+    {
+
+    }
+    return 0;
+}
+void BackImageManager::CreateRootGridB_()
+{
+    if(0!=m_rootgridB_)
+        return;
+    QRootGrid &rootgrid = RootGridB_();
+    m_rootgridB_ = &rootgrid;
+}
+QRootGrid& BackImageManager::RootGridB_()
+{
+    static QRootGrid _therootgridB_;
+    return _therootgridB_;
+
+}
+
+
+
+
+

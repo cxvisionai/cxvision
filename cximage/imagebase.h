@@ -9,7 +9,7 @@ typedef struct sPoint
     short x;
     short y;
 }SPoint;
-
+class PointsShape;
 
 class ImageBase :public QImage
 {
@@ -29,7 +29,6 @@ public:
     void Image_HSOThreshold(int iHbegin,int iHend,int iSbegin,int iSend,int iObegin,int iOend);
     void Image_ColorThreshold(int ir,int ig,int ib,int ihgap,int isgap,int iogap);
     void ImageMulDiv(double dvalue);
-    void ImageAnd(ImageBase*pimage);
     void ImageAnd(void *paimage);
     void ImageZoomAnd(ImageBase *pimage,int ix,int iy,double dscalex,double dscaley);
 
@@ -41,7 +40,7 @@ public:
     void Image_And(int inum);
     void Image_Or(int inum);
 
-    //    void ImageXOR(ImageBase*pimage);
+//    void ImageXOR(ImageBase*pimage);
 //    void ImageAND(ImageBase*pimage);
 //    void ImageNOT(ImageBase*pimage);
     void ImageMove(int ix,int iy);
@@ -60,7 +59,12 @@ public:
     void setshow(int ishow){m_ishow = ishow;}
     int getshow(){return m_ishow;}
     void draw(QPainter &painter);
-
+    void drawx(QPainter &painter,
+               double dmovx,
+               double dmovy,
+               double dangle,
+               double dzoomx,
+               double dzoomy);
 
     int m_ix0;
     int m_iy0;
@@ -73,21 +77,29 @@ public:
 
     int PixelCompare(QRgb &pixel1,QRgb &pixel2,
                      int ihgap,int isgap,int iogap);
-
+    void SetPartROI(double itype,double dpercent,double dpart);
     void SetROI(int ix,int iy,int iw,int ih);
     void SaveROI(const char *pfilename);
 
     void ROIImage();
+
+
+    QString m_qfiledir;
+
     void SavePath(const char *pfilename);
     void LoadPath(const char *pfilename);
+    void Load();
+    void LoadNum(int inum);
+    void LoadNumJpg(int inum);
+    void setimagepath(const char *pfilepath);
     void ROIImageColor(QRgb pixel0);
     void ROIImageClear(int ibit);
     void ROIImageBar(int itimes,int ifade);
     void ROIImageThre(int ithre);
     void ROIImageColorGray();
     void ROIImageRGBThre(int iRthre,int iGthre,int iBthre,int iandor);
-    void ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,int ifindBorW);
-    void ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,int ifindBorW);
+    void ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int ireserve,int igap,int ifindBorW);
+    void ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int ireserve,int igap,int ifindBorW);
 
     void ROIImage_5Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap,int ifindBorW);
     void ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap,int ifindBorW);
@@ -117,13 +129,13 @@ public:
 
     void roitoroi(void *pimage);
 
-    QPainterPath ImageTransfer(QPainterPath &path,int ix,int iy,double dangle=0.0,double dscalex=1.0,double dscaley=1.0);
+    QPainterPath ImageTransfer(QPainterPath &path,double dx,double dy,double dangle=0.0,double dscalex=1.0,double dscaley=1.0);
     void ROIImageCopy(int ix1,int iy1,int iw1,int ih1);
     void ROItoROI(ImageBase *pimage);
 
     void ROIColorTable();
     void ROIColorTableBlur(int iGauss_Smoth,int ithre);
-    void ROIColorTableEasyThre(int iandor);
+    void ROIColorTableEasyThre(int iandor,int ioffset=0);
     QRgb ROIBackground(int ileftgap,int irightgap,
                        int iupgap,int idowngap,int imethod=1);
 
@@ -133,6 +145,25 @@ public:
     void ImageDrawPath(QPainterPath &path,int ix0,int iy0,QColor acolor);
 
     void clipboardROIimage();
+    void ImageCentRotate(double dangle);
+    void ImageFont(const char *pchar);
+    void ImageFontSet(const char *pchar);
+    void shapesetroi(void *pshape);
+    int tablevalue(int icolor);
+
+
+    QString m_qfontname;
+    int m_ifontposx;
+    int m_ifontposy;
+    int m_ifontposw;
+    int m_ifontposh;
+    int m_ifontsize;
+    int m_ifontrvalue;
+    int m_ifontgvalue;
+    int m_ifontbvalue;
+
+    void ImageFontValue(double dvalue,double dtype);
+
 };
 
 #endif

@@ -4,210 +4,11 @@
 #include"CONST_COLOR_ISO_AtanAngle.H"
 #include"CONST_COLOR_ISO_SqrtX.H"
 #include"backimagemanager.h"
-
+#include"shape.h"
+#include"imagetype.h"
 #include<QApplication>
 #include<QClipboard>
-
-typedef struct Thrddouble
-{
-    double varH;
-    double varS;
-    double varO;
-}thrddouble,*pthrdfloat;
-#define DOTISO_MAC(R1,G1,B1,d_h,d_s,d_o)\
-{\
-    int max[3];\
-    int temp;\
-    char Smax[3];\
-    char stemp;\
-    max[0]=R1;\
-    max[1]=B1;\
-    max[2]=G1;\
-    Smax[0]='R';\
-    Smax[1]='B';\
-    Smax[2]='G';\
-    if(max[1]>max[0])\
-{\
-    temp=max[0];\
-    max[0]=max[1];\
-    max[1]=temp;\
-    stemp=Smax[0];\
-    Smax[0]=Smax[1];\
-    Smax[1]=stemp;\
-}\
-    if(max[2]>max[1])\
-{\
-    temp=max[1];\
-    max[1]=max[2];\
-    max[2]=temp;\
-    stemp=Smax[1];\
-    Smax[1]=Smax[2];\
-    Smax[2]=stemp;\
-}\
-    if(max[1]>max[0])\
-{\
-    temp=max[0];\
-    max[0]=max[1];\
-    max[1]=temp;\
-    stemp=Smax[0];\
-    Smax[0]=Smax[1];\
-    Smax[1]=stemp;\
-}\
-    int iH = (max[0]+max[1]+max[2]);\
-    double H=intx0_5(iH) +intx0_062(iH) +intx0_015(iH);\
-    int snum=(max[1]*max[1]+max[2]*max[2]+max[0]*max[0]-max[0]*max[2]-max[1]*max[2]-max[1]*max[0]);\
-    double S=ISOsqrtX[snum];\
-    int S1=(((max[0])<<1)-(max[1]+max[2]));\
-    int S2=(max[1]-max[2]);\
-    double a=ISOAtanAngle[S1][S2];\
-    a=(a-30)>0?(a-30):0;\
-    if(Smax[0]=='R')\
-{\
-    if(Smax[1]=='B')\
-    a=a+180;\
-        else\
-        a=300-a;\
-}\
-        else\
-{\
-    if(Smax[0]== 'B')\
-{\
-    if(Smax[1]=='G')\
-    a=a+60;\
-        else \
-        a=180-a;\
-}\
-        else\
-{\
-    if(Smax[0]=='G')\
-{\
-    if(Smax[1]=='R')\
-    a=a+300;\
-        else \
-        a=60-a;\
-}\
-        else\
-{\
-    if(0);\
-}\
-}\
-}\
-    d_h=H;\
-    d_s=S;\
-    d_o=a;\
-}
-#define  intx0_5(i) (i>>1)
-#define  intx0_25(i) (i>>2)
-#define  intx0_125(i) (i>>3)
-#define  intx0_062(i) (i>>4)
-#define  intx0_031(i) (i>>5)
-#define  intx0_015(i) (i>>6)
-#define  intx0_007(i) (i>>7)
-#define  intx0_003(i) (i>>8)
-#define  intx0(i) (i>>9)
-#define  intx2(i) (i<<1)
-#define  intx4(i) (i<<2)
-#define  intx8(i) (i<<3)
-#define  intx16(i) (i<<4)
-#define  intx256(i) (i<<8)
-
-#define  intx0_5(i) (i>>1)
-#define  intx0_25(i) (i>>2)
-#define  intx0_125(i) (i>>3)
-#define  intx0_062(i) (i>>4)
-#define  intx0_031(i) (i>>5)
-#define  intx0_015(i) (i>>6)
-#define  intx0_007(i) (i>>7)
-#define  intx0_003(i) (i>>8)
-#define  intx0(i) (i>>9)
-#define  intx2(i) (i<<1)
-#define  intx4(i) (i<<2)
-#define  intx8(i) (i<<3)
-#define  intx16(i) (i<<4)
-#define  intx256(i) (i<<8)
-
-
-//Gauss 9
-#define  MATRIXNUM   9
-
-static const float GausPar0[MATRIXNUM]
-={
-    //	0.0625,0.125,0.1875,0.5,0.1875,0.125,0.0625
-    //	0.02,0.08,0.125,0.15,0.25,0.15,0.125,0.08,0.02
-    0 ,0,0 ,0 ,1 ,0,0 ,0 ,0
-};
-static const int GausPar0_INT[MATRIXNUM]
-={
-    //	0.0625,0.125,0.1875,0.5,0.1875,0.125,0.0625
-    //	0.02,0.08,0.125,0.15,0.25,0.15,0.125,0.08,0.02
-    0 ,0,0 ,0 ,1 ,0,0 ,0 ,0
-};
-static const double GausPar[MATRIXNUM]
-={
-//	0.0625,0.125,0.1875,0.5,0.1875,0.125,0.0625
-//	0.02,0.08,0.125,0.15,0.25,0.15,0.125,0.08,0.02
-    0.01,0.06,0.125,0.15,0.31,0.15,0.125,0.06,0.01
-};
-
-//static const int GausPar_INT[MATRIXNUM]//<<8
-//={
-    //	0.0625,0.125,0.1875,0.5,0.1875,0.125,0.0625
-    //	0.02,0.08,0.125,0.15,0.25,0.15,0.125,0.08,0.02
-    //0.01*256,0.06*256,0.125*256,0.15*256,0.31*256,0.15*256,0.125*256,0.06*256,0.01*256
-//};
-
-
-static const double GausPar_Smoth[MATRIXNUM]
-={
-     0.02,0.08,0.125,0.15,0.25,0.15,0.125,0.08,0.02
- };
-
-//static const int  GausPar_Smoth_INT[MATRIXNUM]//<<8
-//={
-//    0.02*256,0.08*256,0.125*256,0.15*256,0.25*256,0.15*256,0.125*256,0.08*256,0.02*256
-//};
-static const double GausPar_moreSmoth[MATRIXNUM]
-={
-    0.02,0.105,0.135,0.16,0.20,0.16,0.135,0.105,0.02
-};
-//static const int GausPar_moreSmoth_INT[MATRIXNUM]
-//={
-//    0.02*256,0.105*256,0.135*256,0.16*256,0.20*256,0.16*256,0.135*256,0.105*256,0.02*256
-//};
-static const double GausPar_average[MATRIXNUM]
-={
-    0.112,0.112,0.112,0.112,0.112,0.112,0.112,0.112,0.112
-};
-
-//static const int GausPar_average_INT[MATRIXNUM]
-//={
-//    0.112*256,0.112*256,0.112*256,0.112*256,0.112*256,0.112*256,0.112*256,0.112*256,0.112*256
-//};
-static const int GausMatix[MATRIXNUM]
-={
-    -4,-3,-2,-1,0,1,2,3,4
-};
-
-#define  MATRIXNUM5   5
-    const double Gaus5Par[MATRIXNUM5]
-    ={
-        0.13 ,0.21,0.32,0.21,0.13
-        //intx0_125(i-2) ,intx0_25(i-1),intx0_25(i)+intx0_062(i),intx0_25(i+1),intx0_125(i+2)
-    };
-
-    const double Gaus5Par_Smoth[MATRIXNUM5]
-    ={
-         0.14,0.22,0.28,0.22,0.14
-    };
-    const double Gaus5Par_moreSmoth[MATRIXNUM5]
-    ={
-        0.15,0.22,0.26,0.22,0.15
-    };
-    const double Gaus5Par_average[MATRIXNUM5]
-    ={
-        0.2,0.2,0.2,0.2,0.2
-    };
-
+#include<QFileDialog>
 
 
 ImageBase::ImageBase()
@@ -238,7 +39,21 @@ void ImageBase::draw(QPainter &painter)
     painter.drawImage(0, 0,*this);
  //   painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 }
-
+void ImageBase::drawx(QPainter &painter,
+                      double dmovx,
+                      double dmovy,
+                      double dangle,
+                      double dzoomx,
+                      double dzoomy)
+{
+    painter.save();
+    painter.translate(dmovx, dmovy);
+    painter.rotate(dangle);
+    painter.scale(dzoomx, dzoomy);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    painter.drawImage(0, 0,*this);
+    painter.restore();
+}
 
 thrddouble DotISO_FAST(int R1,int G1,int B1)
 {
@@ -874,17 +689,17 @@ void ImageBase::ImageDecrease(int inum)
 void ImageBase::ImageFilp()
 {
     QRgb pixel0;
-    int ihalfh = height() /2;
+    int ihalfh = (height()-1) /2;
 
     for(int x(0); x < width(); x++)
         {
             for(int y(0); y <  ihalfh; y++)
             {
                QRgb pixel0 =  pixel(x, y);
-               QRgb pixel1 =  pixel(x, height()-y);
+               QRgb pixel1 =  pixel(x, height()-1-y);
 
                setPixel(x, y, pixel1);
-               setPixel(x, height()-y, pixel0);
+               setPixel(x, height()-1-y, pixel0);
             }
         }
 }
@@ -905,7 +720,6 @@ void ImageBase::ImageMirror()
             }
         }
 }
-
 
 void ImageBase::SetROI(int ix,int iy,int iw,int ih)
 {
@@ -1007,9 +821,19 @@ int ImageBase::PixelCompare(QRgb &pixel1,QRgb &pixel2,
 void ImageBase::ROIImageThre(int ithre)
 {
 
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
         for(int x(m_ix0); x < m_ix0+m_iw; x++)
         {
@@ -1029,9 +853,19 @@ void ImageBase::ROIImageThre(int ithre)
 }
 void ImageBase::ROIImageRGBThre(int iRthre,int iGthre,int iBthre,int iandor)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
     int ir,ig,ib;
         for(int x(m_ix0); x < m_ix0+m_iw; x++)
@@ -1078,21 +912,34 @@ void ImageBase::ROIImageRGBThre(int iRthre,int iGthre,int iBthre,int iandor)
 
 
 
-void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,int ifindBorW)
+void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int ireserve,int igap,int ifindBorW)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
 
 
     QRgb pixelCur,pixel_1,pixel_2,pixel_3,pixel1,pixel2,pixel3;
     QRgb pixel0;
+
+    int tx0 = m_ix0-6>0?m_ix0-6:3;
+    int tx1 =  m_ix0+m_iw+6<width()?m_ix0+m_iw+3:width()-3-1;
     //Gausblur
     for(int y(m_iy0+1); y < m_iy0+ m_ih; y++)
     {
 
-       for(int x(m_ix0+3); x < m_ix0+m_iw-3; x++)
+       for(int x(tx0); x < tx1; x++)
        {
+
             pixelCur =  pixel(x, y);
             pixel_1 =  pixel(x-1, y);
             pixel_2 =  pixel(x-2, y);
@@ -1136,12 +983,27 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
     }
 
     QRgb pixelx;
+    QRgb pixelx0;
+    QRgb pixelx1;
+    if(0==ireserve)
+    {
+        pixelx0= qRgb(0, 0, 0);
+        pixelx1= qRgb(255, 255, 255);
+    }
+    else if(0==ireserve)
+    {
+        pixelx0= qRgb(255, 255, 255);
+        pixelx1= qRgb(0, 0, 0);
+    }
+
     //GAP MUD THRE
     if(0==ifindBorW)
     {
-        for(int y(m_iy0+m_ih-2); y >m_iy0  ; y--)
+        int tmpx0 = m_ix0>0?m_ix0:0;
+        int tmpx1 =  m_ix0+m_iw+igap<width()?m_ix0+m_iw+igap:width()-igap-1;
+        for(int y(m_iy0+m_ih); y >m_iy0  ; y--)
         {
-            for(int x(m_ix0); x < m_ix0+m_iw-igap; x++)
+            for(int x(tmpx0); x < tmpx1; x++)
             {
                 QRgb pixel1 =  pixel(x, y);
                 QRgb pixel2 =  pixel(x+igap, y);
@@ -1150,9 +1012,9 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
                 int ib = qBlue(pixel2) - qBlue(pixel1);
                 if(ir>ithre||ig>ithre||ib>ithre)
                 // if(qGray(pixel2)-qGray(pixel1)>ithre)
-                    pixelx = qRgb(255, 255, 255);
+                    pixelx = pixelx1;
                 else
-                    pixelx = qRgb(0, 0, 0);
+                    pixelx = pixelx0;
                // ir = ir > ithre ? 255:0;
                // ig = ig > ithre ? 255:0;
                // ib = ib > ithre ? 255:0;
@@ -1162,9 +1024,12 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
     }
     else if(1==ifindBorW)
     {
-        for(int y(m_iy0+m_ih-2); y >m_iy0  ; y--)
+        int tmpx0 = m_ix0>0?m_ix0:0;
+        int tmpx1 =  m_ix0+m_iw+igap<width()?m_ix0+m_iw+igap:width()-igap-1;
+
+        for(int y(m_iy0+m_ih); y >m_iy0  ; y--)
         {
-            for(int x(m_ix0); x < m_ix0+m_iw-igap; x++)
+            for(int x(tmpx0); x < tmpx1; x++)
             {
                 QRgb pixel1 =  pixel(x, y);
                 QRgb pixel2 =  pixel(x+igap, y);
@@ -1173,9 +1038,9 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
                 int ib = qBlue(pixel1) - qBlue(pixel2);
                 if(ir>ithre||ig>ithre||ib>ithre)
                 //if(qGray(pixel1)-qGray(pixel2))
-                    pixelx = qRgb(255, 255, 255);
+                    pixelx = pixelx1;
                 else
-                    pixelx = qRgb(0, 0, 0);
+                    pixelx = pixelx0;
                // ir = ir > ithre ? 255:0;
                // ig = ig > ithre ? 255:0;
                // ib = ib > ithre ? 255:0;
@@ -1187,19 +1052,30 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
 
 
 }
-void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,int ifindBorW)
+void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int ireserve,int igap,int ifindBorW)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
 
     QRgb pixelCur,pixel_1,pixel_2,pixel1,pixel2;
     QRgb pixel0;
     //Gausblur
-    for(int y(m_iy0+1); y < m_iy0+ m_ih; y++)
+    int tx0 = m_ix0-6>0?m_ix0-6:3;
+    int tx1 =  m_ix0+m_iw+6<width()?m_ix0+m_iw+3:width()-3-1;
+    for(int y(m_iy0); y < m_iy0+ m_ih; y++)
     {
-
-       for(int x(m_ix0+2); x < m_ix0+m_iw-2; x++)
+       for(int x(tx0); x < tx1; x++)
        {
             pixelCur =  pixel(x, y);
             pixel_1 =  pixel(x-1, y);
@@ -1229,12 +1105,29 @@ void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
     }
 
     QRgb pixelx;
+
+    QRgb pixelx0;
+    QRgb pixelx1;
+    if(0==ireserve)
+    {
+        pixelx0= qRgb(0, 0, 0);
+        pixelx1= qRgb(255, 255, 255);
+    }
+    else if(1==ireserve)
+    {
+        pixelx0= qRgb(255, 255, 255);
+        pixelx1= qRgb(0, 0, 0);
+    }
     //GAP MUD THRE
     if(0==ifindBorW)
     {
-        for(int y(m_iy0+m_ih-2); y >m_iy0  ; y--)
+
+        int tmpx0 = m_ix0>0?m_ix0:0;
+        int tmpx1 =  m_ix0+m_iw+igap<width()?m_ix0+m_iw+igap:width()-igap-1;
+
+        for(int y(m_iy0+ m_ih); y >m_iy0/*+2 20210225*/ ; y--)
         {
-            for(int x(m_ix0); x < m_ix0+m_iw-igap; x++)
+            for(int x(tmpx0/*+2 20210225*/); x < tmpx1/*-igap 20210225*/; x++)
             {
                 QRgb pixel1 =  pixel(x, y);
                 QRgb pixel2 =  pixel(x+igap, y);
@@ -1243,9 +1136,9 @@ void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
                 int ib = qBlue(pixel2) - qBlue(pixel1);
                 if(ir>ithre||ig>ithre||ib>ithre)
                // if(qGray(pixel2)-qGray(pixel1)>ithre)
-                    pixelx = qRgb(255, 255, 255);
+                    pixelx = pixelx1;
                 else
-                    pixelx = qRgb(0, 0, 0);
+                    pixelx = pixelx0;
                // ir = ir > ithre ? 255:0;
                // ig = ig > ithre ? 255:0;
                // ib = ib > ithre ? 255:0;
@@ -1255,9 +1148,13 @@ void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
     }
     else if(1==ifindBorW)
     {
-        for(int y(m_iy0+m_ih-2); y >m_iy0  ; y--)
+
+        int tmpx0 = m_ix0>0?m_ix0:0;
+        int tmpx1 =  m_ix0+m_iw+igap<width()?m_ix0+m_iw+igap:width()-igap-1;
+
+        for(int y(m_iy0+m_ih); y >m_iy0/*+2 20210225*/  ; y--)
         {
-            for(int x(m_ix0); x < m_ix0+m_iw-igap; x++)
+            for(int x(tmpx0); x <tmpx1/*-igap 20210225*/; x++)
             {
                 QRgb pixel1 =  pixel(x, y);
                 QRgb pixel2 =  pixel(x+igap, y);
@@ -1266,9 +1163,9 @@ void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
                 int ib = qBlue(pixel1) - qBlue(pixel2);
                 if(ir>ithre||ig>ithre||ib>ithre)
                 //if(qGray(pixel1)-qGray(pixel2))
-                    pixelx = qRgb(255, 255, 255);
+                    pixelx = pixelx1;
                 else
-                    pixelx = qRgb(0, 0, 0);
+                    pixelx = pixelx0;
                // ir = ir > ithre ? 255:0;
                // ig = ig > ithre ? 255:0;
                // ib = ib > ithre ? 255:0;
@@ -1280,11 +1177,20 @@ void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW(int ithre,int increase,int igap,i
 
 
 }
-void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap,int ifindBorW)
+void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int ireserve,int igap,int ifindBorW)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
 
 
     QRgb pixelCur,pixel_1,pixel_2,pixel_3,pixel1,pixel2,pixel3;
@@ -1337,12 +1243,24 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap
     }
 
     QRgb pixelx;
+    QRgb pixelx0;
+    QRgb pixelx1;
+    if(0==ireserve)
+    {
+        pixelx0= qRgb(0, 0, 0);
+        pixelx1= qRgb(255, 255, 255);
+    }
+    else if(1==ireserve)
+    {
+        pixelx0= qRgb(255, 255, 255);
+        pixelx1= qRgb(0, 0, 0);
+    }
     //GAP MUD THRE
     if(0==ifindBorW)
     {
-        for(int x(m_ix0+m_iw-2); x >m_ix0  ; x--)
+        for(int x(m_ix0+m_iw-2); x >m_ix0+2  ; x--)
         {
-            for(int y(m_iy0); y < m_iy0+m_ih-igap; y++)
+            for(int y(m_iy0+2); y < m_iy0+m_ih-igap-igap; y++)
             {
                 QRgb pixel1 =  pixel(x, y);
                 QRgb pixel2 =  pixel(x, y+igap);
@@ -1351,9 +1269,9 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap
                 int ib = qBlue(pixel2) - qBlue(pixel1);
                 if(ir>ithre||ig>ithre||ib>ithre)
                 // if(qGray(pixel2)-qGray(pixel1)>ithre)
-                    pixelx = qRgb(255, 255, 255);
+                    pixelx = pixelx1;
                 else
-                    pixelx = qRgb(0, 0, 0);
+                    pixelx = pixelx0;
                // ir = ir > ithre ? 255:0;
                // ig = ig > ithre ? 255:0;
                // ib = ib > ithre ? 255:0;
@@ -1365,7 +1283,7 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap
     {
         for(int x(m_ix0+m_iw-2); x >m_ix0  ; x--)
         {
-            for(int y(m_iy0); y < m_iy0+m_ih-igap; y++)
+            for(int y(m_iy0+2); y < m_iy0+m_ih-igap-igap; y++)
             {
                 QRgb pixel1 =  pixel(x, y);
                 QRgb pixel2 =  pixel(x, y+igap);
@@ -1374,9 +1292,9 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap
                 int ib = qBlue(pixel1) - qBlue(pixel2);
                 if(ir>ithre||ig>ithre||ib>ithre)
                 //if(qGray(pixel1)-qGray(pixel2))
-                    pixelx = qRgb(255, 255, 255);
+                    pixelx = pixelx1;
                 else
-                    pixelx = qRgb(0, 0, 0);
+                    pixelx = pixelx0;
                // ir = ir > ithre ? 255:0;
                // ig = ig > ithre ? 255:0;
                // ib = ib > ithre ? 255:0;
@@ -1388,9 +1306,19 @@ void ImageBase::ROIImage_7Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap
 }
 void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap,int ifindBorW)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
 
     QRgb pixelCur,pixel_1,pixel_2,pixel1,pixel2;
     QRgb pixel0;
@@ -1482,37 +1410,43 @@ void ImageBase::ROIImage_5Blur_Gap_mud_thre_BW_H(int ithre,int increase,int igap
 
 void ImageBase::ROIImageClear(int ibit)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
-    if(0==ibit)
+    if(width()<m_ix0  +m_iw)
     {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
         for(int x(m_ix0); x < m_ix0+ m_iw; x++)
         {
             for(int y(m_iy0); y <  m_iy0+m_ih; y++)
             {
-               QRgb  pixel0 = qRgb(0, 0, 0);
+               QRgb  pixel0 = qRgb(ibit, ibit, ibit);
                 setPixel(x, y, pixel0);
             }
         }
-    }
-    else
-    {
-        for(int x(m_ix0); x < m_ix0+m_iw; x++)
-        {
-            for(int y(m_iy0); y <  m_iy0+m_ih; y++)
-            {
-                QRgb pixel0 = qRgb(255, 255, 255);
-                setPixel(x, y, pixel0);
-            }
-        }
-    }
 }
 void ImageBase::ROIImageColor(QRgb pixel0)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     for(int x(m_ix0); x < m_ix0+m_iw; x++)
     {
         for(int y(m_iy0); y <  m_iy0+m_ih; y++)
@@ -1524,9 +1458,19 @@ void ImageBase::ROIImageColor(QRgb pixel0)
 
 void ImageBase::ROIImageBar(int itimes,int ifade)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     int ibarsize = 0;
 //  2x2 3x3
 //    H
@@ -1558,9 +1502,19 @@ void ImageBase::ROIImageBar(int itimes,int ifade)
 }
 void ImageBase::ROIImage_HSOThreshold(int iHbegin,int iHend,int iSbegin,int iSend,int iObegin,int iOend)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     int x0 = m_ix0;
     int y0 = m_iy0;
     int iw = m_iw;
@@ -2256,9 +2210,19 @@ void ImageBase::ROIImage_HSOThreshold(int iHbegin,int iHend,int iSbegin,int iSen
 
 void ImageBase::ROIImage_ColorThreshold(int ir,int ig,int ib,int ihgap,int isgap,int iogap)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     double d_h_0,d_s_0,d_o_0;
 
     DOTISO_MAC(ir,ig,ib,d_h_0,d_s_0,d_o_0);
@@ -2293,9 +2257,19 @@ void ImageBase::ROIImage_ColorThreshold(int ir,int ig,int ib,int ihgap,int isgap
 }
 void ImageBase::ROIImageGray()
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
         for(int x(m_ix0); x < m_ix0 + m_iw; x++)
         {
             for(int y(m_iy0); y < m_iy0 + m_ih; y++)
@@ -2308,9 +2282,19 @@ void ImageBase::ROIImageGray()
 
 void ImageBase::ROIImageMulDiv(double dvalue)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
         for(int x(m_ix0); x < m_ix0 + m_iw; x++)
         {
@@ -2331,9 +2315,19 @@ void ImageBase::ROIImageMulDiv(double dvalue)
 }
 void ImageBase::ROIImageOR(ImageBase*pimage,QPainter::CompositionMode mode)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QPainter painter(this);
     painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
     painter.drawImage(m_ix0, m_iy0, *pimage,m_ix0,m_iy0,m_iw,m_ih);
@@ -2345,15 +2339,35 @@ void ImageBase::ROIImageOR(ImageBase*pimage,QPainter::CompositionMode mode)
 void ImageBase::ROIImageMove(int ix,int iy)
 {
 
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
 }
 void ImageBase::ROIImageIncrease(int inum)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
         for(int x(m_ix0); x < m_ix0+m_iw; x++)
         {
@@ -2369,10 +2383,19 @@ void ImageBase::ROIImageIncrease(int inum)
 }
 void ImageBase::ROIImageDecrease(int inum)
 {
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
 
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
     QRgb pixel0;
     for(int x(m_ix0); x < m_ix0+m_iw; x++)
     {
@@ -2390,9 +2413,19 @@ void ImageBase::ROIImageDecrease(int inum)
 
 void ImageBase::ROIImageMoveAndX(int ix)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
     int iv = ix >0 ? 1:-1;
     for(int i=0;i<ix;i++)
@@ -2409,9 +2442,19 @@ void ImageBase::ROIImageMoveAndX(int ix)
 }
 void ImageBase::ROIImageMoveAndY(int ix)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
     int iv = ix >0 ? 1:-1;
 
@@ -2429,10 +2472,19 @@ void ImageBase::ROIImageMoveAndY(int ix)
 }
 void ImageBase::ROIImageMoveOrX(int ix)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih
-        || ix==0)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
 
     QRgb pixel0;
     int iv = ix >0 ? 1:-1;
@@ -2451,10 +2503,19 @@ void ImageBase::ROIImageMoveOrX(int ix)
 }
 void ImageBase::ROIImageMoveOrY(int ix)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih
-            || ix==0)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
     int iv = ix >0 ? 1:-1;
     for(int i=0;i<ix;i++)
@@ -2472,10 +2533,19 @@ void ImageBase::ROIImageMoveOrY(int ix)
 
 void ImageBase::ROIImageAnd(int ix)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih
-            || ix==0)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
 
     ROIImageMoveAndY(-ix);
     ROIImageMoveAndX(-ix);
@@ -2486,10 +2556,19 @@ void ImageBase::ROIImageAnd(int ix)
 
 void ImageBase::ROIImageOr(int ix)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih
-            || ix==0)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
 
     ROIImageMoveOrY(-ix);
     ROIImageMoveOrX(-ix);
@@ -2501,9 +2580,19 @@ void ImageBase::ROIImageOr(int ix)
 
 void ImageBase::ROIImageFilp()
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     QRgb pixel0;
     int ihalfh = m_ih /2;
 
@@ -2521,10 +2610,19 @@ void ImageBase::ROIImageFilp()
 }
 void ImageBase::ROIImageMirror()
 {
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
 
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
     QRgb pixel0;
     int ihalfw = m_iw /2;
 
@@ -2542,10 +2640,19 @@ void ImageBase::ROIImageMirror()
 }
 void ImageBase::ROIImageColorGray()
 {
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
 
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
 
     for(int x(m_ix0); x < m_ix0 + m_iw; x++)
         {
@@ -2559,11 +2666,12 @@ void ImageBase::ROIImageColorGray()
         }
 }
 
-QPainterPath ImageBase::ImageTransfer(QPainterPath &path,int ix,int iy,double dangle,double dscalex,double dscaley)
+QPainterPath ImageBase::ImageTransfer(QPainterPath &path,double dx,double dy,double dangle,double dscalex,double dscaley)
 {
+
     QPainter painter(this);
     painter.setClipPath(path);
-    painter.translate(-ix, -iy);
+    painter.translate(-dx, -dy);
     painter.rotate(dangle);
     painter.scale(dscalex, dscaley);
     return painter.clipPath();
@@ -2577,8 +2685,195 @@ void ImageBase::ImageDrawPath(QPainterPath &path,int ix1,int iy1,QColor acolor)
          setPixelColor(aele.x+ix1,aele.y+iy1,acolor);
     }
 }
+
+void ImageBase::ImageCentRotate(double dangle)
+{
+
+    QTransform matrix;
+    matrix.translate(0, 0);
+    matrix.scale(1, 1);
+    matrix.rotate(dangle);
+
+     QImage aimageroi1=this->copy(0,0,iw(),ih());
+    QImage aimageroi2=aimageroi1.transformed(matrix);
+    QPainter painter(&aimageroi2);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    painter.drawImage(0, 0, *this);
+    painter.end();
+}
+
+void ImageBase::ImageFont(const char *pchar)
+{
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+    if(width()<=0||height()<=0)
+        return;
+    QString qfontstring(pchar);
+    QStringList astlsit = qfontstring.split(",");//name,pos.x,pos.y,size,r,g,b
+    QString qname;
+    QString qposx;int iposx;
+    QString qposy;int iposy;
+    QString qposw;int iposw;
+    QString qposh;int iposh;
+    QString qsize;int ifontsize;
+    QString qrvalue;int irvalue;
+    QString qgvalue;int igvalue;
+    QString qbvalue;int ibvalue;
+    if(astlsit.size()>0)
+        qname = astlsit[0];
+    if(astlsit.size()>1)
+    {
+        qposx = astlsit[1];
+        iposx = qposx.toInt();
+    }
+    if(astlsit.size()>2)
+    {
+        qposy = astlsit[2];
+        iposy = qposy.toInt();
+    }
+    if(astlsit.size()>3)
+    {
+        qposw = astlsit[3];
+        iposw = qposw.toInt();
+    }
+    if(astlsit.size()>4)
+    {
+        qposh = astlsit[4];
+        iposh = qposh.toInt();
+    }
+    if(astlsit.size()>5)
+    {
+        qsize = astlsit[5];
+        ifontsize = qsize.toInt();
+    }
+    if(astlsit.size()>6)
+    {
+        qrvalue = astlsit[6];
+        irvalue = qrvalue.toInt();
+    }
+    if(astlsit.size()>7)
+    {
+        qgvalue = astlsit[7];
+        igvalue = qgvalue.toInt();
+    }
+    if(astlsit.size()>8)
+    {
+        qbvalue = astlsit[8];
+        ibvalue = qbvalue.toInt();
+    }
+    QPainter painter(this);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    QFont font = painter.font();
+    QColor qcolor(irvalue,igvalue,ibvalue);
+    font.setPixelSize(ifontsize);
+    painter.setFont(font);
+    painter.setPen(qcolor);
+    painter.setBrush(Qt::white);
+    QRect arect;
+    arect.setRect(iposx,iposy,iposw,iposh);
+    painter.drawText(arect, Qt::AlignCenter,qname);
+
+    painter.drawImage(0, 0,*this);
+    painter.end();
+}
+void ImageBase::ImageFontSet(const char *pchar)
+{
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+    if(width()<=0||height()<=0)
+        return;
+    QString qfontstring(pchar);
+    QStringList astlsit = qfontstring.split(",");//name,pos.x,pos.y,size,r,g,b
+    QString qname;
+    QString qposx;int iposx;
+    QString qposy;int iposy;
+    QString qposw;int iposw;
+    QString qposh;int iposh;
+    QString qsize;int ifontsize;
+    QString qrvalue;int irvalue;
+    QString qgvalue;int igvalue;
+    QString qbvalue;int ibvalue;
+
+    if(astlsit.size()>0)
+    {
+        qposx = astlsit[0];
+        m_ifontposx = qposx.toInt();
+    }
+    if(astlsit.size()>1)
+    {
+        qposy = astlsit[1];
+        m_ifontposy = qposy.toInt();
+    }
+    if(astlsit.size()>2)
+    {
+        qposw = astlsit[2];
+        m_ifontposw = qposw.toInt();
+    }
+    if(astlsit.size()>3)
+    {
+        qposh = astlsit[3];
+        m_ifontposh = qposh.toInt();
+    }
+    if(astlsit.size()>4)
+    {
+        qsize = astlsit[4];
+        m_ifontsize = qsize.toInt();
+    }
+    if(astlsit.size()>5)
+    {
+        qrvalue = astlsit[5];
+        m_ifontrvalue = qrvalue.toInt();
+    }
+    if(astlsit.size()>6)
+    {
+        qgvalue = astlsit[6];
+        m_ifontgvalue = qgvalue.toInt();
+    }
+    if(astlsit.size()>7)
+    {
+        qbvalue = astlsit[7];
+        m_ifontbvalue = qbvalue.toInt();
+    }
+
+}
+ void ImageBase::ImageFontValue(double dvalue,double dtype)
+ {
+     if(dtype==1.0)
+     {
+         int ivalue=dvalue;
+         m_qfontname=QString("%1").arg(ivalue);
+     }
+     else
+         m_qfontname=QString("%1").arg(dvalue);
+
+     QPainter painter(this);
+     painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+     QFont font = painter.font();
+     QColor qcolor(m_ifontrvalue,m_ifontgvalue,m_ifontbvalue);
+     font.setPixelSize(m_ifontsize);
+     painter.setFont(font);
+     painter.setPen(qcolor);
+     painter.setBrush(Qt::white);
+     QRect arect;
+     arect.setRect(m_ifontposx,m_ifontposy,m_ifontposw,m_ifontposh);
+     painter.drawText(arect, Qt::AlignCenter,m_qfontname);
+
+     painter.drawImage(0, 0,*this);
+     painter.end();
+ }
 void ImageBase::ImageZoom(double dscalex,double dscaley)
 {
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
     if(width()<=0||height()<=0)
         return;
     QPainter painter(this);
@@ -2590,6 +2885,11 @@ void ImageBase::ImageZoom(double dscalex,double dscaley)
 }
 void ImageBase::ImageZoomAnd(ImageBase *pimage,int ix,int iy,double dscalex,double dscaley)
 {
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
     if(width()<=0||height()<=0)
         return;
     QPainter painter(this);
@@ -2623,6 +2923,11 @@ void ImageBase::ImagePen(int ix,int iy )
 }
 void ImageBase::ROIImageCopy(int ix1,int iy1,int iw1,int ih1)
 {
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
     if(width()< ix0() + iw()
        || height() < iy0() + ih())
         return;//error process
@@ -2647,14 +2952,59 @@ void ImageBase::ROIImageCopy(int ix1,int iy1,int iw1,int ih1)
 }
 void ImageBase::SavePath(const char *pfilename)
 {
-    save(QString(pfilename));
+    /*
+BMP
+GIF
+JPG
+JPEG
+PNG
+PBM
+PGM
+PPM
+XBM
+XPM
+*/
+    save(QString(pfilename),"JPEG");
 }
+
+
 void ImageBase::LoadPath(const char *pfilename)
 {
     load(QString(pfilename));
 }
+void ImageBase::LoadNum(int inum)
+{
+    QString strname = m_qfiledir + QString("/%1.bmp").arg(inum);
+    load(strname);
+}
+void ImageBase::LoadNumJpg(int inum)
+{
+    QString strname = m_qfiledir + QString("/%1.jpg").arg(inum);
+    load(strname);
+}
+void ImageBase::setimagepath(const char *pfilepath)
+{
+    m_qfiledir=QString(pfilepath);
+}
+void ImageBase::Load()
+{
+    QString fileName =
+        QFileDialog::getOpenFileName(nullptr, QString("Open File"),
+        QDir::currentPath(),
+        QString("ALL Files (*.*)"));
+    if (fileName.isEmpty())
+        return;
+    QFileInfo aqfi(fileName);
+   m_qfiledir = aqfi.path();
+    load(fileName);
+}
 void ImageBase::ROIImage()
 {
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
     if(width()< ix0() + iw()
        || height() < iy0() + ih())
         return;//error process
@@ -2684,6 +3034,10 @@ void ImageBase::clipboardROIimage()
 void ImageBase::SaveROI(const char *pfilename)
 {
 
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
     if(width()< ix0() + iw()
        || height() < iy0() + ih())
         return;//error process
@@ -2704,6 +3058,11 @@ void ImageBase::roitoroi(void *paimage)
 }
 void ImageBase::ROItoROI(ImageBase *aimage)
 {
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
     if(width()< ix0() + iw()
        || height() < iy0() + ih())
         return;//error process
@@ -2721,6 +3080,10 @@ void ImageBase::ROItoROI(ImageBase *aimage)
 void ImageBase::ROIColorTable()
 {
 
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
     if(width()< ix0() + iw()
        || height() < iy0() + ih())
         return;//error process
@@ -2866,7 +3229,7 @@ void ImageBase::ROIColorTableBlur(int iGauss_Smoth,int ithre)
         btable[i] = dblurvalue[i]-ithre;
     }
 }
-void ImageBase::ROIColorTableEasyThre(int iandor)
+void ImageBase::ROIColorTableEasyThre(int iandor,int ioffset)
 {
     int icurmodule = BackImageManager::GetCurMode();
     qint64 *rtable = BackImageManager::GetRtable(icurmodule);
@@ -2897,7 +3260,7 @@ void ImageBase::ROIColorTableEasyThre(int iandor)
             }
         }
 
-    ir = (imax+imin)/2 ;
+    ir = (imax+imin)/2+ioffset ;
 
 
     //g
@@ -2920,7 +3283,7 @@ void ImageBase::ROIColorTableEasyThre(int iandor)
             break;
             }
         }
-    ig = (imax+imin)/2 ;
+    ig = (imax+imin)/2+ioffset ;
     //b
     imax = 0;
     imin = 0;
@@ -2941,14 +3304,22 @@ void ImageBase::ROIColorTableEasyThre(int iandor)
             break;
             }
         }
-    ib = (imax+imin)/2;
+    ib = (imax+imin)/2+ioffset ;
    BackImageManager::g_r_table_thre = ir;
    BackImageManager::g_g_table_thre = ig;
    BackImageManager::g_b_table_thre = ib;
     ROIImageRGBThre(ir,ig,ib,iandor);
 }
+
+
 QRgb ImageBase::ROIBackground(int ileftgap,int irightgap,int iupgap,int idowngap,int imethod)
 {
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+
     if(width()< ix0() + iw()
        || height() < iy0() + ih())
         return QColor(0,0,0).rgb();//error process
@@ -3031,9 +3402,21 @@ QRgb ImageBase::ROIBackground(int ileftgap,int irightgap,int iupgap,int idowngap
 }
 void ImageBase::ROIImageZoom(ImageBase *pimage,double dratex,double dratey)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+
+
     QRgb pixel0 = qRgb(0,0,0);
     QRgb pixel1 = qRgb(255,255,255);
     int ix0 = m_ix0;
@@ -3068,9 +3451,21 @@ void ImageBase::ROIImageZoom(ImageBase *pimage,double dratex,double dratey)
 
 void ImageBase::ROIImageZoomEx(ImageBase *pimage,double dratex,double dratey)
 {
-    if(width()< m_ix0 + m_iw
-       || height() < m_iy0 + m_ih)
-        return;//error process
+
+    if(m_ix0<0)
+        m_ix0=0;
+    if(m_iy0<0)
+        m_iy0=0;
+    if(width()<m_ix0  +m_iw)
+    {
+        m_ix0 =width()-m_iw-1;
+    }
+    if(height() < m_iy0 + m_ih)
+    {
+        m_iy0=height()- m_ih-1;
+    }
+
+
     QRgb pixel0 = qRgb(0,0,0);
     QRgb pixel1 = qRgb(255,255,255);
     int ix0 = m_ix0;
@@ -3139,4 +3534,22 @@ void ImageBase::ROIImageZoomEx(ImageBase *pimage,double dratex,double dratey)
 
     }
 
+}
+void ImageBase::shapesetroi(void *pshape)
+{
+     QShape *ashp=(QShape*)pshape;
+     if(nullptr!=ashp)
+     {
+         QRect arect = ashp->rect();
+         SetROI(arect.x(),arect.y(),arect.width(),arect.height());
+     }
+}
+int ImageBase::tablevalue(int icolor)
+{
+    int icurmodule = BackImageManager::GetCurMode();
+    qint64 *rtable = BackImageManager::GetRtable(icurmodule);
+    qint64 *gtable = BackImageManager::GetGtable(icurmodule);
+    qint64 *btable = BackImageManager::GetBtable(icurmodule);
+    if(icolor<=255&&icolor>=0)
+        return rtable[icolor];
 }

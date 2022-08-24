@@ -2,81 +2,141 @@
 #include "muParserTest.h"
 #include "ImageParserClass.h"
 #include "imagebase.h"
+#include "imagelist.h"
 #include "shapebase.h"
 #include "shape.h"
-//#include "grid.h"
-//#include "findline.h"
-//#include "findobject.h"
-//#include "gridobject.h"
-//#include "fastmatch.h"
-//#include "orc.h"
+#include "grid.h"
+#include "findline.h"
+#include "findobject.h"
+#include "gridobject.h"
+#include "fastmatch.h"
+#include "orc.h"
+#include "imagecodeparser.h"
+#include "imageroi.h"
 #include "backimagemanager.h"
 #include "../p2p/dialog.h"
 #include "../AI/stringai.h"
 #ifdef USE_CAM
 //#include "HWGrabImage.h"
-#include "qt_hik.hpp"
+#include "qt_hik.h"
 #endif
-typedef std::vector<double> vectordouble;
+#ifdef USE_USBCAM
+#include "usbcam.h"
+#endif
 
-class CVectDouble
+typedef std::vector<double> vectordouble;
+typedef std::vector<int> vectorint;
+
+class SmartDouble
 {
-    //char m_filename[128];
-    vectordouble  m_vect;
+    vectordouble m_vectresult;
+    vectordouble m_vectdouble;
 public:
-    CVectDouble(){}
-    ~CVectDouble(){}
-    void push(double dvalue){m_vect.push_back(dvalue);}
-    double get(int inum){return m_vect[inum];}
-    void set(double inum,double dvalue){m_vect[((int)inum)]=dvalue;}
-    void clear(){m_vect.clear();}
-    int size(){return m_vect.size();}
+    SmartDouble(){}
+    ~SmartDouble(){}
+    void push(double dvalue,double dresult){m_vectdouble.push_back(dvalue);m_vectresult.push_back(dresult);}
+    double getvalue(int inum){return m_vectdouble[inum];}
+    double getresult(int inum){return m_vectresult[inum];}
+
+    void set(double inum,double dvalue,double dresult)
+    {m_vectdouble[((int)inum)]=dvalue;m_vectresult[((int)inum)]=dresult;}
+    void clear(){m_vectdouble.clear();m_vectresult.clear();}
+    int size(){return m_vectdouble.size();}
+    int getvaluetimes(double dvalue)
+    {
+        int itimes=0;
+        for(int i =0;i<m_vectdouble.size();i++)
+        {
+            if(m_vectdouble[i]==dvalue)
+                itimes=itimes+1;
+        }
+        return itimes;
+    }
     double average()
     {
         double daverage=0;
-        for(int i=0;i<m_vect.size();i++)
+        for(int i=0;i<m_vectdouble.size();i++)
         {
-            daverage +=m_vect[i];
+            daverage +=m_vectdouble[i];
         }
-        return daverage/m_vect.size();
+        return daverage/m_vectdouble.size();
     }
     double maxvalue()
     {
         double dmax=-11111;
-        for(int i=0;i<m_vect.size();i++)
+        for(int i=0;i<m_vectdouble.size();i++)
         {
-            if(dmax<m_vect[i])
-                dmax =m_vect[i];
+            if(dmax<m_vectdouble[i])
+                dmax =m_vectdouble[i];
         }
         return dmax;
     }
     int maxnum()
     {
         double dmax=-11111;int i;
-        for(i=0;i<m_vect.size();i++)
+        for(i=0;i<m_vectdouble.size();i++)
         {
-            if(dmax<m_vect[i])
-                dmax =m_vect[i];
+            if(dmax<m_vectdouble[i])
+                dmax =m_vectdouble[i];
         }
         return i;
     }
     double minvalue()
     {
         double dmin=9999;
-        for(int i=0;i<m_vect.size();i++)
+        for(int i=0;i<m_vectdouble.size();i++)
         {
-            if(dmin<m_vect[i])
-                dmin =m_vect[i];
+            if(dmin<m_vectdouble[i])
+                dmin =m_vectdouble[i];
         }
         return dmin;
     }
-    void savefile()
+    void save(const char * pchar)
     {
+        int isize = m_vectdouble.size();
+        if(isize<=0)
+            return;
+        FILE    *rf = fopen(pchar, "w+");
+       if ( rf == nullptr)
+           return;
+       rewind(rf);
+       for(int i=0;i<isize-1;i++)
+       {
+           double dv = m_vectdouble[i];
+           double dr = m_vectresult[i];
+           fprintf(rf,"%f$%f,",dv,dr);
+       }
 
-
+       fprintf(rf,"%f",m_vectdouble[isize-1]);
+       fclose(rf);
     }
-};
+    void load(const char * pchar)
+    {
+        clear();
+        FILE    *rf = fopen(pchar, "rb");
+        if(nullptr==rf)
+            return;
+        fseek(rf,0,SEEK_END);
+        int filesize = ftell(rf);
+        char *pcharget =new char[filesize+10];
+        memset(pcharget,0,filesize+10);
+        rewind(rf);
+        fread((char*)(pcharget),filesize,1,rf);
 
+        QString qstr = pcharget;
+        QStringList strnumlist = qstr.split(",");
+        for(int i=0;i<strnumlist.size();i++)
+        {
+            QStringList strdr = strnumlist.at(i).split("$");
+            double dvalue = strdr.at(0).toDouble();
+            double dresult = strdr.at(1).toDouble();
+            push(dvalue,dresult);
+        }
+        delete []pcharget;
+        fclose(rf);
+    }
+
+};
 
 namespace mu
 {
@@ -103,113 +163,248 @@ namespace mu
                        m_parser.DefineClassFun("Module",pmodule,"Show",&BackImageManager::setshow);
                        m_parser.DefineClassFun("Module",pmodule,"setobjectshow",&BackImageManager::setobjectshow);
 
+                        StringAI *pstringai =0;
+                        m_parser.DefineClass("StringAI",pstringai);
+                        m_parser.DefineClassFun("StringAI",pstringai,"addsearchkey",&StringAI::addsearchkey);
+                        m_parser.DefineClassFun("StringAI",pstringai,"clearkeys",&StringAI::clearkeys);
+                        m_parser.DefineClassFun("StringAI",pstringai,"addneedstringlist",&StringAI::addneedstringlist);
+                        m_parser.DefineClassFun("StringAI",pstringai,"addextfilter",&StringAI::addextfilter);
+                        m_parser.DefineClassFun("StringAI",pstringai,"addkeywordfilter",&StringAI::addkeywordfilter);
+                        m_parser.DefineClassFun("StringAI",pstringai,"clearfilter",&StringAI::clearfilter);
+                        m_parser.DefineClassFun("StringAI",pstringai,"updateurltree",&StringAI::updateurltree);
+                        m_parser.DefineClassFun("StringAI",pstringai,"setrelationlabel",&StringAI::setrelationlabel);
+                        m_parser.DefineClassFun("StringAI",pstringai,"seturllabel",&StringAI::seturllabel);
+                        m_parser.DefineClassFun("StringAI",pstringai,"update",&StringAI::update);
+                        m_parser.DefineClassFun("StringAI",pstringai,"addrelation",&StringAI::addrelation);
+                        m_parser.DefineClassFun("StringAI",pstringai,"addurl",&StringAI::addurl);
+                        m_parser.DefineClassFun("StringAI",pstringai,"addocrstring",&StringAI::addocrstring);
+                        m_parser.DefineClassFun("StringAI",pstringai,"clearstring",&StringAI::clearstring);
 
-        StringAI *pstringai =0;
-        m_parser.DefineClass("StringAI",pstringai);
-        m_parser.DefineClassFun("StringAI",pstringai,"addsearchkey",&StringAI::addsearchkey);
-        m_parser.DefineClassFun("StringAI",pstringai,"clearkeys",&StringAI::clearkeys);
-        m_parser.DefineClassFun("StringAI",pstringai,"addneedstringlist",&StringAI::addneedstringlist);
-        m_parser.DefineClassFun("StringAI",pstringai,"addextfilter",&StringAI::addextfilter);
-        m_parser.DefineClassFun("StringAI",pstringai,"addkeywordfilter",&StringAI::addkeywordfilter);
-        m_parser.DefineClassFun("StringAI",pstringai,"clearfilter",&StringAI::clearfilter);
-        m_parser.DefineClassFun("StringAI",pstringai,"updateurltree",&StringAI::updateurltree);
-        m_parser.DefineClassFun("StringAI",pstringai,"setrelationlabel",&StringAI::setrelationlabel);
-        m_parser.DefineClassFun("StringAI",pstringai,"seturllabel",&StringAI::seturllabel);
-        m_parser.DefineClassFun("StringAI",pstringai,"update",&StringAI::update);
-        m_parser.DefineClassFun("StringAI",pstringai,"addrelation",&StringAI::addrelation);
-        m_parser.DefineClassFun("StringAI",pstringai,"addurl",&StringAI::addurl);
-        m_parser.DefineClassFun("StringAI",pstringai,"addocrstring",&StringAI::addocrstring);
-        m_parser.DefineClassFun("StringAI",pstringai,"clearstring",&StringAI::clearstring);
+/**/
+#if defined(Q_OS_UNIX)
+                        Console *pconsole =0;
+                        m_parser.DefineClass("Console",pconsole);
+                        m_parser.DefineClassFun("Console",pconsole,"mousemove",&Console::mousemove);
+                        m_parser.DefineClassFun("Console",pconsole,"mousedown",&Console::mousedown);
+                        m_parser.DefineClassFun("Console",pconsole,"mouseup",&Console::mouseup);
+                        m_parser.DefineClassFun("Console",pconsole,"click",&Console::click);
+                        m_parser.DefineClassFun("Console",pconsole,"key",&Console::key);
+                        m_parser.DefineClassFun("Console",pconsole,"keystring",&Console::keystring);
+                        m_parser.DefineClassFun("Console",pconsole,"doevent",&Console::doevent);
+                        m_parser.DefineClassFun("Console",pconsole,"keyaistring",&Console::keyaistring);
 
-/*
-                       Console *pconsole =0;
-                       m_parser.DefineClass("Console",pconsole);
-                       m_parser.DefineClassFun("Console",pconsole,"mousemove",&Console::mousemove);
-                       m_parser.DefineClassFun("Console",pconsole,"mousedown",&Console::mousedown);
-                       m_parser.DefineClassFun("Console",pconsole,"mouseup",&Console::mouseup);
-                       m_parser.DefineClassFun("Console",pconsole,"click",&Console::click);
-                       m_parser.DefineClassFun("Console",pconsole,"key",&Console::key);
-                       m_parser.DefineClassFun("Console",pconsole,"keystring",&Console::keystring);
-                       m_parser.DefineClassFun("Console",pconsole,"doevent",&Console::doevent);
-                       m_parser.DefineClassFun("Console",pconsole,"keyaistring",&Console::keyaistring);
-*/
-                                     dialogOPT *pdialogopt = 0;
-                                     m_parser.DefineClass("dialogopt",pdialogopt);
+#endif
 
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"testurl",&dialogOPT::test);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"viewparserlist",&dialogOPT::runviewparser);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"viewrunjavascript",&dialogOPT::runjavascript);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"download",&dialogOPT::download);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"setgaptime",&dialogOPT::setgaptime);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"runconsole",&dialogOPT::runconsole);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"downloada",&dialogOPT::downloadA);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"desktopimage",&dialogOPT::desktopimage);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"desktopimagerect",&dialogOPT::desktopimagerect);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"getcomtcpipdesktop",&dialogOPT::getcomtcpipdesktop);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"com2tcpipstring",&dialogOPT::com2tcpipstring);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"com2tcpipkeystring",&dialogOPT::com2tcpipkeystring);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2comimage",&dialogOPT::tcp2comimage);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2comvalue",&dialogOPT::tcp2comvalue);
-                                     m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2comstring",&dialogOPT::tcp2comstring);
-                                    m_parser.DefineClassFun("dialogopt",pdialogopt,"sendserialfile",&dialogOPT::sendserialfile);
-                                    m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2tcpimage",&dialogOPT::tcp2tcpimage);
-                                    m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2tcpvalue",&dialogOPT::tcp2tcpvalue);
-                                    m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2tcpstring",&dialogOPT::tcp2tcpstring);
+               dialogOPT *pdialogopt = 0;
+               m_parser.DefineClass("dialogopt",pdialogopt);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"viewtimer",&dialogOPT::viewtimer);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"viewparserlist",&dialogOPT::runviewparser);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"viewrunjavascript",&dialogOPT::runjavascript);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"download",&dialogOPT::download);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setgaptime",&dialogOPT::setgaptime);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"runconsole",&dialogOPT::runconsole);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"downloada",&dialogOPT::downloadA);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"desktopimage",&dialogOPT::desktopimage);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"desktopimagerect",&dialogOPT::desktopimagerect);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"getcomtcpipdesktop",&dialogOPT::getcomtcpipdesktop);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"com2tcpipstring",&dialogOPT::com2tcpipstring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"com2tcpipkeystring",&dialogOPT::com2tcpipkeystring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2comimage",&dialogOPT::tcp2comimage);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2comvalue",&dialogOPT::tcp2comvalue);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2comstring",&dialogOPT::tcp2comstring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"sendserialfile",&dialogOPT::sendserialfile);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2tcpimage",&dialogOPT::tcp2tcpimage);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2tcpvalue",&dialogOPT::tcp2tcpvalue);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"tcp2tcpstring",&dialogOPT::tcp2tcpstring);
 
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"downloadreset",&dialogOPT::downloadreset);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"runcommand",&dialogOPT::runcommand);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"runstringai",&dialogOPT::runstringai);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"runopt",&dialogOPT::runopt);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"pagelistwork",&dialogOPT::pagelistwork);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"sleep",&dialogOPT::asleep);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"scale",&dialogOPT::scale);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"rundutylist",&dialogOPT::rundutylist);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"cleartab",&dialogOPT::cleartab);
 
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"downloadreset",&dialogOPT::downloadreset);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"runcommand",&dialogOPT::runcommand);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"runstringai",&dialogOPT::runstringai);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"runopt",&dialogOPT::runopt);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"pagelistwork",&dialogOPT::pagelistwork);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"sleep",&dialogOPT::asleep);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"scale",&dialogOPT::scale);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"rundutylist",&dialogOPT::rundutylist);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"cleartab",&dialogOPT::cleartab);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"flashview",&dialogOPT::flashview);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"updateview",&dialogOPT::updateview);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"showlog",&dialogOPT::showlog);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"resetrun",&dialogOPT::resetrun);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"showdlg",&dialogOPT::showdlg);
 
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"updateview",&dialogOPT::updateview);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"showlog",&dialogOPT::showlog);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"showstring",&dialogOPT::showstring);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"urlfilter",&dialogOPT::urlfilter);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"filextfilter",&dialogOPT::filextfilter);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"urlneedstring",&dialogOPT::urlneedstring);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"clearfilter",&dialogOPT::clearfilter);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"showstring",&dialogOPT::showstring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"urlfilter",&dialogOPT::urlfilter);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"filextfilter",&dialogOPT::filextfilter);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"urlneedstring",&dialogOPT::urlneedstring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"clearfilter",&dialogOPT::clearfilter);
 
-                             m_parser.DefineClassFun("dialogopt",pdialogopt,"setstring",&dialogOPT::setcurstring);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"addstring",&dialogOPT::addstring);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"addparservaluestring",&dialogOPT::addparservaluestring);
-                            m_parser.DefineClassFun("dialogopt",pdialogopt,"com2tcpipcurstring",&dialogOPT::com2tcpipcurstring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setstring",&dialogOPT::setcurstring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"addstring",&dialogOPT::addstring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"addparservaluestring",&dialogOPT::addparservaluestring);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"com2tcpipcurstring",&dialogOPT::com2tcpipcurstring);
 
+             //  m_parser.DefineClassFun("dialogopt",pdialogopt,"camshow",&dialogOPT::CamTest);
+             //  m_parser.DefineClassFun("dialogopt",pdialogopt,"showdebug",&dialogOPT::showdebug);
 
-                           m_parser.DefineClassFun("dialogopt",pdialogopt,"camshow",&dialogOPT::CamTest);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"connect2plc",&dialogOPT::connect2PLC);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"write2plc",&dialogOPT::write2PLC);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"runplctimer",&dialogOPT::runplctimer);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"stopplctimer",&dialogOPT::stopplctimer);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setplctrig",&dialogOPT::setplctrig);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setplctrigrun0",&dialogOPT::setplctrigrun0);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setplctrigrun1",&dialogOPT::setplctrigrun1);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setplctrigrun2",&dialogOPT::setplctrigrun2);
 
 
 
+
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"modbus",&dialogOPT::modbus);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setmodbus",&dialogOPT::setmodbus);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"runmodbustimer",&dialogOPT::runmodbustimer);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"stopmodbustimer",&dialogOPT::stopmodbustimer);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setmodbustrig",&dialogOPT::setmodbustrig);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setmodbusoutput",&dialogOPT::setmodbusoutput);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"modbusoutput",&dialogOPT::modbusoutput);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setmodbustrigrun0",&dialogOPT::setmodbustrigrun0);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setmodbustrigrun1",&dialogOPT::setmodbustrigrun1);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setmodbustrigrun2",&dialogOPT::setmodbustrigrun2);
+
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"resetmodbus",&dialogOPT::resetmodbus);
+
+
+
+   //            m_parser.DefineClassFun("dialogopt",pdialogopt,"softtrigset",&dialogOPT::softtrigset);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"setstyle",&dialogOPT::setstyle);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"savevalue",&dialogOPT::savevalue);
+
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"resettime",&dialogOPT::resettime);
+               m_parser.DefineClassFun("dialogopt",pdialogopt,"getruntime",&dialogOPT::getruntime);
+
+
+
+
+ //              m_parser.DefineClassFun("dialogopt",pdialogopt,"startslave",&dialogOPT::startslave);
+  //             m_parser.DefineClassFun("dialogopt",pdialogopt,"showslave",&dialogOPT::showslave);
+
+
+
+#ifdef USE_USBCAM
+               USBCam *pusbcam = 0;
+               m_parser.DefineClass("USBCam",pusbcam);
+               m_parser.DefineClassFun("USBCam",pusbcam,"Show",&USBCam::Show);
+               m_parser.DefineClassFun("USBCam",pusbcam,"start",&USBCam::Start);
+               m_parser.DefineClassFun("USBCam",pusbcam,"stop",&USBCam::Stop);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setimage",&USBCam::SetImage);
+               m_parser.DefineClassFun("USBCam",pusbcam,"continuecap",&USBCam::ContinueCapture);
+               m_parser.DefineClassFun("USBCam",pusbcam,"stopcap",&USBCam::StopCapture);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setimagelist",&USBCam::SetImageList);
+               m_parser.DefineClassFun("USBCam",pusbcam,"resettrg",&USBCam::resettrg);
+               m_parser.DefineClassFun("USBCam",pusbcam,"gettrgnum",&USBCam::gettrgnum);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getopt",&USBCam::getopt);
+
+
+#if defined(Q_OS_UNIX)
+               m_parser.DefineClassFun("USBCam",pusbcam,"getbrightness",&USBCam::GetBrightness);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getcontrast",&USBCam::GetContrast);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getsaturation",&USBCam::GetSaturation);
+               m_parser.DefineClassFun("USBCam",pusbcam,"gethue",&USBCam::GetHue);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getgamma",&USBCam::GetGamma);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getwhiteness",&USBCam::GetWhiteness);
+               m_parser.DefineClassFun("USBCam",pusbcam,"gethflip",&USBCam::GetHflip);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getvfilp",&USBCam::GetVfilp);
+               m_parser.DefineClassFun("USBCam",pusbcam,"gethueAuto",&USBCam::GetHueAuto);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getexposureAuto",&USBCam::GetExposureAuto);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getfocusAuto",&USBCam::GetFocusAuto);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getgain",&USBCam::GetGain);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getexposure",&USBCam::GetExposure);
+               m_parser.DefineClassFun("USBCam",pusbcam,"getfocus",&USBCam::GetFocus);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setbrightness",&USBCam::SetBrightness);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setcontrast",&USBCam::SetContrast);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setsaturation",&USBCam::SetSaturation);
+               m_parser.DefineClassFun("USBCam",pusbcam,"sethue",&USBCam::SetHue);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setgamma",&USBCam::SetGamma);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setwhiteness",&USBCam::SetWhiteness);
+               m_parser.DefineClassFun("USBCam",pusbcam,"sethflip",&USBCam::SetHflip);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setvfilp",&USBCam::SetVfilp);
+               m_parser.DefineClassFun("USBCam",pusbcam,"sethueAuto",&USBCam::SetHueAuto);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setexposureAuto",&USBCam::SetExposureAuto);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setfocusAuto",&USBCam::SetFocusAuto);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setgain",&USBCam::SetGain);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setexposure",&USBCam::SetExposure);
+               m_parser.DefineClassFun("USBCam",pusbcam,"setfocus",&USBCam::SetFocus);
+
+#endif
+
+#endif
 #ifdef USE_CAM
-                HKCam *pcam = 0;
+            HKCam *pcam = 0;
+            m_parser.DefineClass("CamRun",pcam);
+            m_parser.DefineClassFun("CamRun",pcam,"enumdevice",&HKCam::EnumDevicesA);
+            m_parser.DefineClassFun("CamRun",pcam,"opendevice",&HKCam::OpenDeviceA);
+            m_parser.DefineClassFun("CamRun",pcam,"closedevice",&HKCam::CloseDeviceA);
+
+            m_parser.DefineClassFun("CamRun",pcam,"startgarb",&HKCam::startgarb);
+            m_parser.DefineClassFun("CamRun",pcam,"softtrig",&HKCam::SoftwareTrg);
+            m_parser.DefineClassFun("CamRun",pcam,"softtrig2image",&HKCam::SoftwareTrg2Image);
+
+            m_parser.DefineClassFun("CamRun",pcam,"garbopen",&HKCam::GarbOpen);
+            m_parser.DefineClassFun("CamRun",pcam,"garbclose",&HKCam::GarbClose);
+
+            m_parser.DefineClassFun("CamRun",pcam,"camstats",&HKCam::camstats);
+
+            m_parser.DefineClassFun("CamRun",pcam,"garbone",&HKCam::GarbOne);
+            m_parser.DefineClassFun("CamRun",pcam,"garbonet",&HKCam::GarbOneT);
+
+            //m_parser.DefineClassFun("CamRun",pcam,"savejpg",&CamRun::SaveImageJPG);
+            m_parser.DefineClassFun("CamRun",pcam,"savebmp",&HKCam::SaveBmp);
+
+            //m_parser.DefineClassFun("CamRun",pcam,"garbimage",&HKCam::OnBnClickedGarb);
+            m_parser.DefineClassFun("CamRun",pcam,"reversex",&HKCam::ReverseX);
+            m_parser.DefineClassFun("CamRun",pcam,"reversey",&HKCam::ReverseY);
+
+            m_parser.DefineClassFun("CamRun",pcam,"resetview",&HKCam::ReSetView);
+
+
+
+
+
+            m_parser.DefineClassFun("CamRun",pcam,"setexptime",&HKCam::SetExptime);
+
+
+#endif
+#ifdef USE_CAMxxx
+                CamRun *pcam = 0;
                 m_parser.DefineClass("CamRun",pcam);
-                m_parser.DefineClassFun("CamRun",pcam,"enumdevice",&HKCam::EnumDevicesA);
-                m_parser.DefineClassFun("CamRun",pcam,"opendevice",&HKCam::OpenDeviceA);
-                m_parser.DefineClassFun("CamRun",pcam,"closedevice",&HKCam::CloseDeviceA);
+                m_parser.DefineClassFun("CamRun",pcam,"enumdevice",&CamRun::OnBnClickedEnumButton);
+                m_parser.DefineClassFun("CamRun",pcam,"opendevice",&CamRun::OnBnClickedOpenButton);
+                m_parser.DefineClassFun("CamRun",pcam,"closedevice",&CamRun::OnBnClickedCloseButton);
+                m_parser.DefineClassFun("CamRun",pcam,"getresetvalue",&CamRun::GetResetValue);
 
 
 
-                m_parser.DefineClassFun("CamRun",pcam,"startgarb",&HKCam::startgarb);
-                m_parser.DefineClassFun("CamRun",pcam,"softtrig",&HKCam::SoftwareTrg);
-                m_parser.DefineClassFun("CamRun",pcam,"softtrig2image",&HKCam::SoftwareTrg2Image);
-
-
+                m_parser.DefineClassFun("CamRun",pcam,"startgarb",&CamRun::OnBnClickedStartGrabbingButton);
+                m_parser.DefineClassFun("CamRun",pcam,"softtrig",&CamRun::OnBnClickedSoftwareOnceButton);
                 //m_parser.DefineClassFun("CamRun",pcam,"savejpg",&CamRun::SaveImageJPG);
-                m_parser.DefineClassFun("CamRun",pcam,"savebmp",&HKCam::SaveBmp);
+                m_parser.DefineClassFun("CamRun",pcam,"savebmp",&CamRun::SaveImageBMP);
 
-            //    m_parser.DefineClassFun("CamRun",pcam,"garbimage",&HKCam::OnBnClickedGarb);
+                m_parser.DefineClassFun("CamRun",pcam,"garbimage",&CamRun::OnBnClickedGarb);
 
-              //  m_parser.DefineClassFun("CamRun",pcam,"reversex",&HKCam::OnBnClickedReverseX);
-              //  m_parser.DefineClassFun("CamRun",pcam,"reversey",&HKCam::OnBnClickedReverseY);
+                m_parser.DefineClassFun("CamRun",pcam,"reversex",&CamRun::OnBnClickedReverseX);
+                m_parser.DefineClassFun("CamRun",pcam,"reversey",&CamRun::OnBnClickedReverseY);
 
 #endif
 
 
+
+               ImageList *pimagelist = 0;
+               m_parser.DefineClass("ImageList",pimagelist);
+               m_parser.DefineClassFun("ImageList",pimagelist,"Show",&ImageList::setshow);
+               m_parser.DefineClassFun("ImageList",pimagelist,"save",&ImageList::save);
+               m_parser.DefineClassFun("ImageList",pimagelist,"load",&ImageList::load);
+               m_parser.DefineClassFun("ImageList",pimagelist,"setcurimgenum",&ImageList::setcurimgenum);
+               m_parser.DefineClassFun("ImageList",pimagelist,"settoimage",&ImageList::settoimage);
+               m_parser.DefineClassFun("ImageList",pimagelist,"clearimage",&ImageList::clearimage);
 
 
 
@@ -234,8 +429,14 @@ namespace mu
                        m_parser.DefineClassFun("Image",pimage,"roibartab",&ImageBase::ROIColorTableBlur);
                        m_parser.DefineClassFun("Image",pimage,"roieasythre",&ImageBase::ROIColorTableEasyThre);
 
+                       m_parser.DefineClassFun("Image",pimage,"setimagepath",&ImageBase::setimagepath);
+
                        m_parser.DefineClassFun("Image",pimage,"savepath",&ImageBase::SavePath);
                        m_parser.DefineClassFun("Image",pimage,"loadpath",&ImageBase::LoadPath);
+                       m_parser.DefineClassFun("Image",pimage,"load",&ImageBase::Load);
+                       m_parser.DefineClassFun("Image",pimage,"loadnum",&ImageBase::LoadNum);
+                       m_parser.DefineClassFun("Image",pimage,"loadnumjpg",&ImageBase::LoadNumJpg);
+
                        m_parser.DefineClassFun("Image",pimage,"saveroi",&ImageBase::SaveROI);
 
                        m_parser.DefineClassFun("Image",pimage,"roitoroi",&ImageBase::roitoroi);
@@ -283,20 +484,26 @@ namespace mu
                        m_parser.DefineClassFun("Image",pimage,"image_and",&ImageBase::Image_And);
                        m_parser.DefineClassFun("Image",pimage,"image_or",&ImageBase::Image_Or);
                        m_parser.DefineClassFun("Image",pimage,"roiimage",&ImageBase::ROIImage);
+                       m_parser.DefineClassFun("Image",pimage,"rotate",&ImageBase::ImageCentRotate);
+                       m_parser.DefineClassFun("Image",pimage,"imagefont",&ImageBase::ImageFont);
+                       m_parser.DefineClassFun("Image",pimage,"shapesetroi",&ImageBase::shapesetroi);
+                       m_parser.DefineClassFun("Image",pimage,"imagefontvalue",&ImageBase::ImageFontValue);
+                       m_parser.DefineClassFun("Image",pimage,"imagefontset",&ImageBase::ImageFontSet);
 
 
 
 
-                       QShape *pshape = 0;
+                       QShape *pshape = nullptr;
                        m_parser.DefineClass("Shape",pshape);
                        m_parser.DefineClassFun("Shape",pshape,"settype",&QShape::settype);
                        m_parser.DefineClassFun("Shape",pshape,"setname",&QShape::setname);
                        m_parser.DefineClassFun("Shape",pshape,"setrect",&QShape::setrect);
                        m_parser.DefineClassFun("Shape",pshape,"setcolor",&QShape::setcolor);
+                       m_parser.DefineClassFun("Shape",pshape,"setfont",&QShape::setfont);
 
 
 
-                       ShapeBase *pshapebase = 0;
+                       ShapeBase *pshapebase = nullptr;
                        m_parser.DefineClass("ShapeBase",pshapebase);
                        m_parser.DefineClassFun("ShapeBase",pshapebase,"settransformed",&ShapeBase::setTransformed);
                        m_parser.DefineClassFun("ShapeBase",pshapebase,"setshape",&ShapeBase::setShape);
@@ -308,30 +515,389 @@ namespace mu
                        m_parser.DefineClassFun("ShapeBase",pshapebase,"setpenw",&ShapeBase::setpenw);
 
 
+                       PointsShape *apoints = nullptr;
+                       m_parser.DefineClass("PointsShape",apoints);
+                       m_parser.DefineClassFun("PointsShape",apoints,"Show",&PointsShape::setshow);
+                       m_parser.DefineClassFun("PointsShape",apoints,"addpoint",&PointsShape::addapoint);
+                       m_parser.DefineClassFun("PointsShape",apoints,"clear",&PointsShape::clear);
+                       m_parser.DefineClassFun("PointsShape",apoints,"calibration",&PointsShape::calibration);
+                       m_parser.DefineClassFun("PointsShape",apoints,"size",&PointsShape::size);
+                       m_parser.DefineClassFun("PointsShape",apoints,"getx",&PointsShape::getx);
+                       m_parser.DefineClassFun("PointsShape",apoints,"gety",&PointsShape::gety);
 
-        LineShape *plineshape = 0;
-        m_parser.DefineClass("LineShape",plineshape);
-        m_parser.DefineClassFun("LineShape",plineshape,"setline",&LineShape::setline);
-        m_parser.DefineClassFun("LineShape",plineshape,"Show",&LineShape::setshow);
-        m_parser.DefineClassFun("LineShape",plineshape,"move",&LineShape::Move);
-        m_parser.DefineClassFun("LineShape",plineshape,"rotate",&LineShape::Rotate);
-        m_parser.DefineClassFun("LineShape",plineshape,"zoom",&LineShape::Zoom);
-        m_parser.DefineClassFun("LineShape",plineshape,"setpenw",&LineShape::setpenw);
 
 
-        CVectDouble *avect=0;
+                        LineShape *plineshape = nullptr;
+                        m_parser.DefineClass("LineShape",plineshape);
+                        m_parser.DefineClassFun("LineShape",plineshape,"setline",&LineShape::setline);
+                        m_parser.DefineClassFun("LineShape",plineshape,"Show",&LineShape::setshow);
+                        m_parser.DefineClassFun("LineShape",plineshape,"move",&LineShape::Move);
+                        m_parser.DefineClassFun("LineShape",plineshape,"rotate",&LineShape::Rotate);
+                        m_parser.DefineClassFun("LineShape",plineshape,"zoom",&LineShape::Zoom);
+                        m_parser.DefineClassFun("LineShape",plineshape,"setpenw",&LineShape::setpenw);
+
+                        findline *pfindline = nullptr;
+                        m_parser.DefineClass("findline",pfindline);
+                        m_parser.DefineClassFun("findline",pfindline,"setrect",&findline::setrect);
+                        m_parser.DefineClassFun("findline",pfindline,"Show",&findline::setshow);
+                        m_parser.DefineClassFun("findline",pfindline,"clear",&findline::clear);
+                        m_parser.DefineClassFun("findline",pfindline,"setwhgap",&findline::SetWHgap);
+                        m_parser.DefineClassFun("findline",pfindline,"measure",&findline::measure);
+
+                        m_parser.DefineClassFun("findline",pfindline,"setlinesample",&findline::setlinesamplerate);
+                        m_parser.DefineClassFun("findline",pfindline,"setlinegap",&findline::setlinegap);
+                        m_parser.DefineClassFun("findline",pfindline,"setmethod",&findline::setmethod);
+                        m_parser.DefineClassFun("findline",pfindline,"setthre",&findline::setthre);
+                        m_parser.DefineClassFun("findline",pfindline,"setgama",&findline::setgamarate);
+                        m_parser.DefineClassFun("findline",pfindline,"setfindsetting",&findline::setfindsetting);
+                        m_parser.DefineClassFun("findline",pfindline,"setfilter",&findline::setfilter);
+        m_parser.DefineClassFun("findline",pfindline,"findpattern",&findline::findpattern);
+        m_parser.DefineClassFun("findline",pfindline,"setcompgap",&findline::setcomparegap);
+        m_parser.DefineClassFun("findline",pfindline,"shapesetroi",&findline::shapesetroi);
+
+                        ImageROI * pimageroi= nullptr;
+                        m_parser.DefineClass("Imageroi",pimageroi);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"getimage",&ImageROI::getimage);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setrect",&ImageROI::setrect);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setrelmatch",&ImageROI::setrelationrectfrom_matchresult);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setrelzoom",&ImageROI::setrelationzoom);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setrelresultnum",&ImageROI::setrelationrectfromresultnum);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setrelxy",&ImageROI::setrelationxy);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setrelpart",&ImageROI::setrelationpart);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setreltorect",&ImageROI::setrelationtorect);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"setsplitrect",&ImageROI::setsplitrect);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"selectrect",&ImageROI::selectrect);
+
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"findrect",&ImageROI::findrect);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"roitable",&ImageROI::ColorTable);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"tablevalue",&ImageROI::tablevalue);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"tableblur",&ImageROI::ColorTableBlur);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"roieasythre",&ImageROI::roieasythre);
+
+
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"roiedgew",&ImageROI::roiedge);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"roiedgeh",&ImageROI::roiedgeh);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"roiedge7w",&ImageROI::roiedge7);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"roiedge7h",&ImageROI::roiedgeh7);
+                        m_parser.DefineClassFun("Imageroi",pimageroi,"shapesetroi",&ImageROI::shapesetroi);
+
+
+
+                        findobject *pfindobject = nullptr;
+                        m_parser.DefineClass("findobject",pfindobject);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setrect",&findobject::setrect);
+                        m_parser.DefineClassFun("findobject",pfindobject,"measure",&findobject::measure);
+                        m_parser.DefineClassFun("findobject",pfindobject,"Show",&findobject::setshow);
+                        m_parser.DefineClassFun("findobject",pfindobject,"measurex",&findobject::measurex);
+                        m_parser.DefineClassFun("findobject",pfindobject,"sethsogap",&findobject::sethsogap);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setminmax",&findobject::setminmaxarea);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setminmaxwh",&findobject::setminmaxwh);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setbrow",&findobject::setbrow);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setdistance",&findobject::setdistance);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setsearchtype",&findobject::setsearchtype);
+                        m_parser.DefineClassFun("findobject",pfindobject,"edgeimage",&findobject::edgeimage);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setedgeoi",&findobject::setedgeoi);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setoffset",&findobject::setoffset);
+
+
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresultcentx",&findobject::getresultcentx);
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresultcenty",&findobject::getresultcenty);
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresultx",&findobject::getresultx);
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresulty",&findobject::getresulty);
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresultw",&findobject::getresultw);
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresulth",&findobject::getresulth);
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresultsize",&findobject::getresultsize);
+                        m_parser.DefineClassFun("findobject",pfindobject,"getresultobjsnum",&findobject::getresultobjsnum);
+                        m_parser.DefineClassFun("findobject",pfindobject,"objectgrid",&findobject::objectgrid);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setobjectgrid",&findobject::setobjectgrid);
+                        m_parser.DefineClassFun("findobject",pfindobject,"objectsort",&findobject::objectsort);
+                        m_parser.DefineClassFun("findobject",pfindobject,"edge",&findobject::Edge);
+
+
+                        m_parser.DefineClassFun("findobject",pfindobject,"setrelresultnum",&findobject::setrelationrectfromresultnum);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setrelmatch",&findobject::setrelationrectfrom_matchresult);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setrelxy",&findobject::setrelationxy);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setrelzoom",&findobject::setrelationzoom);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setreltorect",&findobject::setrelationtorect);
+
+                        m_parser.DefineClassFun("findobject",pfindobject,"setcolor",&findobject::setcolorstyle);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setroithre",&findobject::SetImageROIthre);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setroiincrease",&findobject::SetImageROIincrease);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setroicomparegap",&findobject::SetImageROIcomparegap);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setroifindborw",&findobject::SetImageROIfindBorW);
+                        m_parser.DefineClassFun("findobject",pfindobject,"setroiedge5o7",&findobject::SetImageROIedge_5o7);
+                        m_parser.DefineClassFun("findobject",pfindobject,"roithre",&findobject::ImageROIthre);
+                        m_parser.DefineClassFun("findobject",pfindobject,"roiedge",&findobject::ImageROIedge);
+                        m_parser.DefineClassFun("findobject",pfindobject,"roiedgeh",&findobject::ImageROIedgeH);
+
+                        m_parser.DefineClassFun("findobject",pfindobject,"shapesetroi",&findobject::shapesetroi);
+
+
+
+
+
+
+        QGrid *pgrid = nullptr;
+        m_parser.DefineClass("grid",pgrid);
+        m_parser.DefineClassFun("grid",pgrid,"setgrid",&QGrid::setgrid);
+        m_parser.DefineClassFun("grid",pgrid,"Show",&QGrid::setshow);
+        m_parser.DefineClassFun("grid",pgrid,"settype",&QGrid::settype);
+        m_parser.DefineClassFun("grid",pgrid,"settypevalue",&QGrid::settypevalue);
+        m_parser.DefineClassFun("grid",pgrid,"clear",&QGrid::clear);
+        m_parser.DefineClassFun("grid",pgrid,"setbrush",&QGrid::setbrush);
+        m_parser.DefineClassFun("grid",pgrid,"modeltogrid",&QGrid::modeltogrid);
+        m_parser.DefineClassFun("grid",pgrid,"loadmodel",&QGrid::loadmodelfile);
+        m_parser.DefineClassFun("grid",pgrid,"savemodel",&QGrid::savemodelfile);
+
+        m_parser.DefineClassFun("grid",pgrid,"savemap",&QGrid::savemapmodel);
+        m_parser.DefineClassFun("grid",pgrid,"loadmap",&QGrid::loadmapmodel);
+        m_parser.DefineClassFun("grid",pgrid,"roiimagetomap",&QGrid::roiimagetomodel);
+
+        m_parser.DefineClassFun("grid",pgrid,"unit",&QGrid::UnitGrid);
+        m_parser.DefineClassFun("grid",pgrid,"method",&QGrid::ModelGridMethod_Gauss);
+        m_parser.DefineClassFun("grid",pgrid,"methodobject",&QGrid::ModelGridMethod_Object);
+
+
+        m_parser.DefineClassFun("grid",pgrid,"zeromodel",&QGrid::ZeroModel);
+        m_parser.DefineClassFun("grid",pgrid,"setunit",&QGrid::SetUnit);
+        m_parser.DefineClassFun("grid",pgrid,"centgrid",&QGrid::CentGrid);
+        m_parser.DefineClassFun("grid",pgrid,"gridzoom",&QGrid::GridZoom);
+        m_parser.DefineClassFun("grid",pgrid,"grid2patmodel",&QGrid::Grid2PattenModel);
+
+
+
+
+        gridobject *pgridobject = nullptr;
+        m_parser.DefineClass("gridobject",pgridobject);
+
+        m_parser.DefineClassFun("gridobject",pgridobject,"setrect",&gridobject::setrect);
+        m_parser.DefineClassFun("gridobject",pgridobject,"Show",&gridobject::setshow);
+        m_parser.DefineClassFun("gridobject",pgridobject,"gridmeasure",&gridobject::gridmeasure_l0);
+        m_parser.DefineClassFun("gridobject",pgridobject,"sethsogap",&gridobject::sethsogap);
+        m_parser.DefineClassFun("gridobject",pgridobject,"setminmax",&gridobject::setminmaxarea);
+        m_parser.DefineClassFun("gridobject",pgridobject,"setminmaxwh",&gridobject::setminmaxwh);
+        m_parser.DefineClassFun("gridobject",pgridobject,"setbrow",&gridobject::setbrow);
+        m_parser.DefineClassFun("gridobject",pgridobject,"setdistance",&gridobject::setdistance);
+        m_parser.DefineClassFun("gridobject",pgridobject,"setsearchtype",&gridobject::setsearchtype);
+        m_parser.DefineClassFun("gridobject",pgridobject,"clear",&gridobject::Clear);
+
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresultcentx",&gridobject::getresultcentx);
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresultcenty",&gridobject::getresultcenty);
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresultx",&gridobject::getresultx);
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresulty",&gridobject::getresulty);
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresultw",&gridobject::getresultw);
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresulth",&gridobject::getresulth);
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresultsize",&gridobject::getresultsize);
+        m_parser.DefineClassFun("gridobject",pgridobject,"getresultobjsnum",&gridobject::getresultobjsnum);
+        m_parser.DefineClassFun("gridobject",pgridobject,"setshowspec",&gridobject::setshowspec);
+
+
+
+        fastmatch *pfastmatch = nullptr;
+        m_parser.DefineClass("fastmatch",pfastmatch);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setrect",&fastmatch::setrect);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"Show",&fastmatch::setshow);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"learn",&fastmatch::learn);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setcompgap",&fastmatch::setcomparegap);
+
+        //
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setwhgap",&fastmatch::SetWHgap);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"measure",&fastmatch::measure);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setlinesample",&fastmatch::setlinesamplerate);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setlinegap",&fastmatch::setlinegap);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setmethod",&fastmatch::setmethod);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setthre",&fastmatch::setthre);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setfindsetting",&fastmatch::setfindsetting);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setfilter",&fastmatch::setfilter);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"savemodel",&fastmatch::savemodelfile);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"loadmodel",&fastmatch::loadmodelfile);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"modelrotate",&fastmatch::modelrotate);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"modelzoom",&fastmatch::modelzoom);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"modelzeroposition",&fastmatch::modelzeroposition);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"match",&fastmatch::match);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setmatchrect",&fastmatch::setmatchrect);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setminscore",&fastmatch::setminscore);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"patternrootgrid",&fastmatch::patternrootgrid);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"patternzoom",&fastmatch::patternzoom);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"modeltranform",&fastmatch::patterntranform);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"rotatematch",&fastmatch::rotatematch);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"loadrotatemodel",&fastmatch::loadrotatemodelfile);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setrotateangle",&fastmatch::setrotateangle);
+
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"clearmodels",&fastmatch::clearmodels_l12);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"addmodels",&fastmatch::addmodels_l12);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"modelstocurrent",&fastmatch::modelstocurrent_l12);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"multimatch",&fastmatch::multimatch);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setmultimatchrect",&fastmatch::setmultimatchrect);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setmatchrectnum",&fastmatch::setmatchrectnum);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"imagelearn",&fastmatch::imagelearn);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"imagematch",&fastmatch::imagematch);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"imagemodelcompareshow",&fastmatch::imagemodelcompareshow);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"savematchroi",&fastmatch::savematchroi);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"loadmapmodel",&fastmatch::loadfastimagemodel);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"savemapmodel",&fastmatch::savefastimagemodel);
+
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"imagemodesclear",&fastmatch::imagemodesclear_l12);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"addimagemodels",&fastmatch::addimagemodels_l12);
+
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"getimagemodelreslut",&fastmatch::getimagemodelreslut);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setclustergap",&fastmatch::setclustergap);
+
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"saveimagemodel",&fastmatch::savematchimagemodel);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setmatchthre",&fastmatch::setmatchthre);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setfindnum",&fastmatch::setfindnum);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"getresultnum",&fastmatch::getresultnum);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"getresultcentx",&fastmatch::getresultcentx);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"getresultcenty",&fastmatch::getresultcenty);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"getmaxresult",&fastmatch::getmaxresult);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setspecshow",&fastmatch::setspecshow);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setrelresultnum",&fastmatch::setrelationrectfromresultnum);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setrelmatch",&fastmatch::setrelationrectfrom_matchresult);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setrelxy",&fastmatch::setrelationxy);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setrelzoom",&fastmatch::setrelationzoom);
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setreltorect",&fastmatch::setrelationtorect);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"setcolor",&fastmatch::setcolorstyle);
+
+        m_parser.DefineClassFun("fastmatch",pfastmatch,"shapesetroi",&fastmatch::shapesetroi);
+
+        QEasyORC *aporc =nullptr;
+        m_parser.DefineClass("easyorc",aporc);
+        m_parser.DefineClassFun("easyorc",aporc,"setorcareasnum",&QEasyORC::setorcareasnum);
+        m_parser.DefineClassFun("easyorc",aporc,"setorcareas",&QEasyORC::setorcareas);
+        m_parser.DefineClassFun("easyorc",aporc,"setorcthre",&QEasyORC::setorcthre);
+        m_parser.DefineClassFun("easyorc",aporc,"setrect",&QEasyORC::setrect);
+        m_parser.DefineClassFun("easyorc",aporc,"Show",&QEasyORC::setshow);
+        m_parser.DefineClassFun("easyorc",aporc,"setspecshow",&QEasyORC::setspecshow);
+        m_parser.DefineClassFun("easyorc",aporc,"areasorc",&QEasyORC::areasorc);
+        m_parser.DefineClassFun("easyorc",aporc,"setdebug",&QEasyORC::setdebug);
+        m_parser.DefineClassFun("easyorc",aporc,"stringsplit",&QEasyORC::stringsplit);
+        m_parser.DefineClassFun("easyorc",aporc,"fontsplit",&QEasyORC::fontsplit);
+        m_parser.DefineClassFun("easyorc",aporc,"exfontsplit",&QEasyORC::exfontsplit);
+        m_parser.DefineClassFun("easyorc",aporc,"modelmethod",&QEasyORC::modelmethod);
+
+        m_parser.DefineClassFun("easyorc",aporc,"match72_matchimg",&QEasyORC::match72_matchimg);
+        m_parser.DefineClassFun("easyorc",aporc,"match72_matchpat",&QEasyORC::match72_matchpat);
+
+
+        m_parser.DefineClassFun("easyorc",aporc,"setsplitimage",&QEasyORC::setsplitimage);
+        m_parser.DefineClassFun("easyorc",aporc,"setsplitgrid",&QEasyORC::setsplitgrid);
+
+        m_parser.DefineClassFun("easyorc",aporc,"setsplitobject",&QEasyORC::setsplitobject);
+        m_parser.DefineClassFun("easyorc",aporc,"setsplitobjectbg",&QEasyORC::setsplitobjectbg);
+        m_parser.DefineClassFun("easyorc",aporc,"setsplitobjectoffset",&QEasyORC::setsplitobjectoffset);
+
+        m_parser.DefineClassFun("easyorc",aporc,"setb2w",&QEasyORC::setb2w);
+
+        m_parser.DefineClassFun("easyorc",aporc,"fontorc",&QEasyORC::fontorc);
+        m_parser.DefineClassFun("easyorc",aporc,"levelmodel",&QEasyORC::levelmodel);
+        m_parser.DefineClassFun("easyorc",aporc,"selectmodel",&QEasyORC::SelectModel);
+
+        m_parser.DefineClassFun("easyorc",aporc,"selectmodel72",&QEasyORC::selectmodel72);
+
+        m_parser.DefineClassFun("easyorc",aporc,"autolearn",&QEasyORC::autolearn);
+        m_parser.DefineClassFun("easyorc",aporc,"autolearnex",&QEasyORC::autolearnex);
+        m_parser.DefineClassFun("easyorc",aporc,"autolearnmass",&QEasyORC::autolearnmass);
+        m_parser.DefineClassFun("easyorc",aporc,"checklearn",&QEasyORC::checklearn);
+        m_parser.DefineClassFun("easyorc",aporc,"checkmatch",&QEasyORC::checkmatch);
+        m_parser.DefineClassFun("easyorc",aporc,"match72",&QEasyORC::match72);
+
+
+        m_parser.DefineClassFun("easyorc",aporc,"learnmass_36",&QEasyORC::learnmass_36);
+
+        m_parser.DefineClassFun("easyorc",aporc,"string_exnum",&QEasyORC::string_exnum);
+        m_parser.DefineClassFun("easyorc",aporc,"string_autolearnmass",&QEasyORC::string_autolearnmass);
+
+        m_parser.DefineClassFun("easyorc",aporc,"setlearngridwh",&QEasyORC::setlearngridwh);
+
+        m_parser.DefineClassFun("easyorc",aporc,"setgrid",&QEasyORC::setgrid);
+
+        m_parser.DefineClassFun("easyorc",aporc,"autolearnobj",&QEasyORC::autolearnobj);
+
+        m_parser.DefineClassFun("easyorc",aporc,"setmatchvalid",&QEasyORC::setmatchvalid);
+        m_parser.DefineClassFun("easyorc",aporc,"setusingobject",&QEasyORC::setusingobject);
+
+
+        m_parser.DefineClassFun("easyorc",aporc,"modelshow",&QEasyORC::imagemodelshow);
+        m_parser.DefineClassFun("easyorc",aporc,"matchshow",&QEasyORC::imagematchshow);
+        m_parser.DefineClassFun("easyorc",aporc,"compareshow",&QEasyORC::imagecompareshow);
+
+        m_parser.DefineClassFun("easyorc",aporc,"setshowpos",&QEasyORC::setshowpos);
+        m_parser.DefineClassFun("easyorc",aporc,"mapgrid",&QEasyORC::mapgrid);
+        m_parser.DefineClassFun("easyorc",aporc,"setshowmap",&QEasyORC::setshowmap);
+        m_parser.DefineClassFun("easyorc",aporc,"fontorc_level",&QEasyORC::fontorc_level);
+        m_parser.DefineClassFun("easyorc",aporc,"savelevelmodel",&QEasyORC::savelevelmodel);
+        m_parser.DefineClassFun("easyorc",aporc,"fontorc_levelex",&QEasyORC::fontorc_levelex);
+        m_parser.DefineClassFun("easyorc",aporc,"fontorc_level2",&QEasyORC::fontorc_level2);
+        m_parser.DefineClassFun("easyorc",aporc,"checkorc_level3",&QEasyORC::checkorc_level3);
+
+        m_parser.DefineClassFun("easyorc",aporc,"setimagetype",&QEasyORC::setimagetype);
+
+        m_parser.DefineClassFun("easyorc",aporc,"fontorc_levelnode",&QEasyORC::fontorc_levelnode);
+        m_parser.DefineClassFun("easyorc",aporc,"shownoderesult",&QEasyORC::shownoderesult);
+        m_parser.DefineClassFun("easyorc",aporc,"shownoderesultex",&QEasyORC::shownoderesultex);
+
+        m_parser.DefineClassFun("easyorc",aporc,"shownodelistresult12x12",&QEasyORC::shownodelistresult12x12);
+        m_parser.DefineClassFun("easyorc",aporc,"clipboardresult",&QEasyORC::clipboardresult);
+        m_parser.DefineClassFun("easyorc",aporc,"setminscore",&QEasyORC::setminscore);
+        m_parser.DefineClassFun("easyorc",aporc,"stringresulthead",&QEasyORC::stringresulthead);
+        m_parser.DefineClassFun("easyorc",aporc,"stringresulttail",&QEasyORC::stringresulttail);
+        m_parser.DefineClassFun("easyorc",aporc,"fontorc_levelnodelist",&QEasyORC::fontorc_levelnodelist);
+        m_parser.DefineClassFun("easyorc",aporc,"shapesetroi",&QEasyORC::shapesetroi);
+
+        imagecodeparser *acode=nullptr;
+        m_parser.DefineClass("imagecodeparser",acode);
+        m_parser.DefineClassFun("imagecodeparser",acode,"setrect",&imagecodeparser::setrect);
+        m_parser.DefineClassFun("imagecodeparser",acode,"Show",&imagecodeparser::setshow);
+        m_parser.DefineClassFun("imagecodeparser",acode,"measure",&imagecodeparser::measure);
+        m_parser.DefineClassFun("imagecodeparser",acode,"measure0",&imagecodeparser::measure0);
+
+        m_parser.DefineClassFun("imagecodeparser",acode,"setrotate",&imagecodeparser::setrotate);
+
+        m_parser.DefineClassFun("imagecodeparser",acode,"setrelresultnum",&imagecodeparser::setrelationrectfromresultnum);
+        m_parser.DefineClassFun("imagecodeparser",acode,"setrelmatch",&imagecodeparser::setrelationrectfrom_matchresult);
+        m_parser.DefineClassFun("imagecodeparser",acode,"setrelxy",&imagecodeparser::setrelationxy);
+        m_parser.DefineClassFun("imagecodeparser",acode,"setrelzoom",&imagecodeparser::setrelationzoom);
+        m_parser.DefineClassFun("imagecodeparser",acode,"setreltorect",&imagecodeparser::setrelationtorect);
+        m_parser.DefineClassFun("imagecodeparser",acode,"findcode",&imagecodeparser::findcode);
+        m_parser.DefineClassFun("imagecodeparser",acode,"findcodex",&imagecodeparser::findcodex);
+        m_parser.DefineClassFun("imagecodeparser",acode,"coderule",&imagecodeparser::coderule);
+
+        m_parser.DefineClassFun("imagecodeparser",acode,"setsmooth",&imagecodeparser::setsmoothtransformation);
+        m_parser.DefineClassFun("imagecodeparser",acode,"setdecoder",&imagecodeparser::setdecoder);
+        m_parser.DefineClassFun("imagecodeparser",acode,"shapesetroi",&imagecodeparser::shapesetroi);
+
+        SmartDouble *avect=nullptr;
         m_parser.DefineClass("vector",avect);
+        m_parser.DefineClassFun("vector",avect,"push",&SmartDouble::push);
+        m_parser.DefineClassFun("vector",avect,"get",&SmartDouble::getvalue);
+        m_parser.DefineClassFun("vector",avect,"get",&SmartDouble::getresult);
 
-        m_parser.DefineClassFun("vector",avect,"push",&CVectDouble::push);
-        m_parser.DefineClassFun("vector",avect,"get",&CVectDouble::get);
-        m_parser.DefineClassFun("vector",avect,"set",&CVectDouble::set);
-        m_parser.DefineClassFun("vector",avect,"clear",&CVectDouble::clear);
-        m_parser.DefineClassFun("vector",avect,"size",&CVectDouble::size);
-        m_parser.DefineClassFun("vector",avect,"average",&CVectDouble::average);
-        m_parser.DefineClassFun("vector",avect,"maxvalue",&CVectDouble::maxvalue);
-        m_parser.DefineClassFun("vector",avect,"minvalue",&CVectDouble::minvalue);
-        m_parser.DefineClassFun("vector",avect,"maxnum",&CVectDouble::maxnum);
-        m_parser.DefineClassFun("vector",avect,"savefile",&CVectDouble::savefile);
+        m_parser.DefineClassFun("vector",avect,"set",&SmartDouble::set);
+        m_parser.DefineClassFun("vector",avect,"clear",&SmartDouble::clear);
+        m_parser.DefineClassFun("vector",avect,"size",&SmartDouble::size);
+        m_parser.DefineClassFun("vector",avect,"average",&SmartDouble::average);
+        m_parser.DefineClassFun("vector",avect,"maxvalue",&SmartDouble::maxvalue);
+        m_parser.DefineClassFun("vector",avect,"minvalue",&SmartDouble::minvalue);
+        m_parser.DefineClassFun("vector",avect,"maxnum",&SmartDouble::maxnum);
+        m_parser.DefineClassFun("vector",avect,"save",&SmartDouble::save);
+        m_parser.DefineClassFun("vector",avect,"load",&SmartDouble::load);
+
+
                     }
                     m_parser.UsingClass(true);
                     m_pdoubleclass = (classbase*)GetClass(string("double"));
@@ -594,8 +1160,8 @@ namespace mu
     void CImageParserClass::RunOptNum_TimeLimit(int inum)
     {
         //m_parser.RunOptTimeLimit(inum);
-        }
-        void CImageParserClass::SetOptCollect(bool Open_Close)
+    }
+    void CImageParserClass::SetOptCollect(bool Open_Close)
     {
         m_parser.SetOptCollect(Open_Close);
     }
@@ -667,7 +1233,6 @@ namespace mu
         {
             m_parser.RunCollectionOpt();
             return true;
-
         }
         else if(sLine==">>open collec"||sLine==">>open collec\r\n")
         {
@@ -722,7 +1287,6 @@ namespace mu
         }
         else
         {
-
             //
             //if(std::strncmp(sLine.c_str(),">>list", 5))
             //{
@@ -2296,8 +2860,8 @@ namespace mu
             classbase *pclass=(item->second);
 
             if("GDIimage32"==item->first)
-                        {
-                            return;
+            {
+                return;
             }
         }
     }
@@ -2397,7 +2961,7 @@ namespace mu
         {
             --item;
             classbase *pclass=(item->second);
-                        if("CPolygonShape"==item->first)
+            if("CPolygonShape"==item->first)
             {
 
             }
@@ -2431,8 +2995,15 @@ namespace mu
             classbase *pclass=(item->second);
             if("double"==item->first)
             {
-#ifdef USE_CCollectionAnalysisEx
-#endif
+                double *adouble=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    adouble=(double *)pclass->getvarpoint(i);
+                    if(adouble)//if(_finite(*adouble))
+                    {
+                        *m_createstream << pclass->getvar(i) <<"="<<*adouble<<";\r\n";
+                    }
+                }
             }
         }
     }
@@ -2481,6 +3052,137 @@ namespace mu
             }
             else if("ShapeBase"==item->first){}
             else if("LineShape"==item->first){}
+            else if("findline"==item->first)
+            {
+                findline *ashape=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    ashape=(findline *)pclass->getvarpoint(i);
+                    if(ashape)
+                    {
+                        *m_createstream << pclass->getvar(i) \
+                                        <<".setrect("\
+                                        <<ashape->rect().x()<<"," \
+                                        <<ashape->rect().y()<<"," \
+                                        <<ashape->rect().width()<<"," \
+                                        <<ashape->rect().height()<<")" \
+                                        <<";\r\n";
+                    }
+                }
+            }
+            else if("findobject"==item->first)
+            {
+                findobject *ashape=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    ashape=(findobject *)pclass->getvarpoint(i);
+                    if(ashape)
+                    {
+                        *m_createstream << pclass->getvar(i) \
+                                        <<".setrect(" \
+                                        <<ashape->rect().x()<<"," \
+                                        <<ashape->rect().y()<<"," \
+                                        <<ashape->rect().width()<<"," \
+                                        <<ashape->rect().height()<<")" \
+                                        <<";\r\n";
+                    }
+                }
+            }
+            else if("gridobject"==item->first)
+            {
+                gridobject *ashape=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    ashape=(gridobject *)pclass->getvarpoint(i);
+                    if(ashape)
+                    {
+                        *m_createstream << pclass->getvar(i) \
+                                        <<".setrect(" \
+                                        <<ashape->rect().x()<<"," \
+                                        <<ashape->rect().y()<<"," \
+                                        <<ashape->rect().width()<<"," \
+                                        <<ashape->rect().height()<<")" \
+                                        <<";\r\n";
+                    }
+                }
+            }
+            else if("fastmatch"==item->first)
+            {
+                fastmatch *ashape=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    ashape=(fastmatch *)pclass->getvarpoint(i);
+                    if(ashape)
+                    {
+                        *m_createstream << pclass->getvar(i) \
+                                        <<".setrect(" \
+                                        <<ashape->rect().x()<<"," \
+                                        <<ashape->rect().y()<<"," \
+                                        <<ashape->rect().width()<<"," \
+                                        <<ashape->rect().height()<<")" \
+                                        <<";\r\n";
+                    }
+                }
+
+            }
+            else if("Imageroi"==item->first)
+            {
+                ImageROI *ashape=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    ashape=(ImageROI *)pclass->getvarpoint(i);
+                    if(ashape)
+                    {
+                        *m_createstream << pclass->getvar(i) \
+                                        <<".setrect(" \
+                                        <<ashape->rect().x()<<"," \
+                                        <<ashape->rect().y()<<"," \
+                                        <<ashape->rect().width()<<"," \
+                                        <<ashape->rect().height()<<")" \
+                                        <<";\r\n";
+                    }
+                }
+
+            }
+            else if("easyorc"==item->first)
+            {
+                QEasyORC *ashape=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    ashape=(QEasyORC *)pclass->getvarpoint(i);
+                    if(ashape)
+                    {
+                        *m_createstream << pclass->getvar(i) \
+                                        <<".setrect(" \
+                                        <<ashape->rect().x()<<"," \
+                                        <<ashape->rect().y()<<"," \
+                                        <<ashape->rect().width()<<"," \
+                                        <<ashape->rect().height()<<")" \
+                                        <<";\r\n";
+                    }
+                }
+
+            }
+            else if("imagecodeparser"==item->first)
+            {
+                imagecodeparser *ashape=0;
+                for(int i=0;i<pclass->size();i++)
+                {
+                    ashape=(imagecodeparser *)pclass->getvarpoint(i);
+                    if(ashape)
+                    {
+                        *m_createstream << pclass->getvar(i) \
+                                        <<".setrect(" \
+                                        <<ashape->rect().x()<<"," \
+                                        <<ashape->rect().y()<<"," \
+                                        <<ashape->rect().width()<<"," \
+                                        <<ashape->rect().height()<<")" \
+                                        <<";\r\n";
+                    }
+                }
+
+            }
+
         }
     }
 

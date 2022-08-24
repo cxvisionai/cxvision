@@ -1,4 +1,4 @@
-#include "shapebase.h"
+﻿#include "shapebase.h"
 #include "backimagemanager.h"
 #include <QPainter>
 
@@ -9,7 +9,8 @@ ShapeBase::ShapeBase():
     m_transformed(false),
     m_pen(QPen(QColor(0,100,0))),
     m_brush(QBrush(QColor(0,250,0))),
-    m_dminpercent(0.01)
+    m_dminpercent(0.01),
+    m_ishowlines(1)
 {
 
 }
@@ -386,6 +387,17 @@ void LineShape::Zoom(double dx0,double dy0)
     m_path = pimage->ImageTransfer(m_path,0,0,0.0,dx0,dy0);
 
 }
+void PointsShape::setshow(int ishow)
+{
+    ShapeBase::setshow(ishow);
+}
+void PointsShape::addapoint(double apointx,double apointy)
+{
+    if(m_path.elementCount()==0)
+        m_path.moveTo(apointx,apointy);
+    else
+        m_path.lineTo(apointx,apointy);
+}
 void PointsShape::addpoint(qreal &apointx,qreal &apointy)
 {
     if(m_path.elementCount()==0)
@@ -434,6 +446,11 @@ void PointsShape::addpoint(QPointF &apoint)
     else
         m_path.lineTo(apoint.x(),apoint.y());
 }
+void PointsShape::addText(qreal x, qreal y,QFont &f,QString &text)
+{
+    m_path.addText(x, y, f, text);
+}
+
 void PointsShape::clear()
 {
     QPainterPath path;
@@ -448,18 +465,18 @@ void PointsShape::drawshape(QPainter &painter)
 //! [9]
     painter.setPen(m_pen);
     painter.setBrush(m_brush);
-    if (m_antialiased)
-        painter.setRenderHint(QPainter::Antialiasing, true);
+//    if (m_antialiased)
+//        painter.setRenderHint(QPainter::Antialiasing, true);
 //! [9]
 
 //! [10]
-            if (m_transformed)
-            {
-                painter.translate(50, 50);
-                painter.rotate(60.0);
-                painter.scale(0.6, 0.9);
-                painter.translate(-50, -50);
-            }
+//            if (m_transformed)
+//            {
+//                painter.translate(50, 50);
+//                painter.rotate(60.0);
+//                painter.scale(0.6, 0.9);
+//                painter.translate(-50, -50);
+//            }
 
             if(1==m_ishow)
             {// draw dot
@@ -479,6 +496,22 @@ void PointsShape::drawshape(QPainter &painter)
                      painter.drawLine(aele.x-3,aele.y-3,aele.x+3,aele.y+3);
                      painter.drawLine(aele.x-3,aele.y+3,aele.x+3,aele.y-3);
                 }
+            }
+            else if(16==m_ishow)
+            {//四边形
+                painter.setPen(QPen(QColor(0,255,0)));
+                int icount = m_path.elementCount();
+                for(int i=0;i<icount-4;i=i+4)
+                {
+                     QPainterPath::Element aele1 = m_path.elementAt(i);
+                     QPainterPath::Element aele2 = m_path.elementAt(i+1);
+                     QPainterPath::Element aele3 = m_path.elementAt(i+2);
+                     QPainterPath::Element aele4 = m_path.elementAt(i+3);
+                     painter.drawLine(aele1.x,aele1.y,aele2.x,aele2.y);
+                     painter.drawLine(aele2.x,aele2.y,aele3.x,aele3.y);
+                     painter.drawLine(aele3.x,aele3.y,aele4.x,aele4.y);
+                     painter.drawLine(aele4.x,aele4.y,aele1.x,aele1.y);
+                 }
             }
             else if(3==m_ishow)
                 painter.drawPath(m_path);
@@ -510,8 +543,9 @@ void PointsShape::drawshape(QPainter &painter)
                //    QPointF fpoint = m_path.pointAtPercent(m_dminpercent*i);
                //     painter.drawPoint(fpoint);
                // }
-                painter.setPen(QPen(QColor(25,155,25)));
-                painter.drawPath(m_path);
+                painter.save();
+               // painter.setPen(QPen(QColor(25,155,25)));
+               // painter.drawPath(m_path);
 
                 int icount = m_path.elementCount();
 
@@ -526,9 +560,124 @@ void PointsShape::drawshape(QPainter &painter)
                     painter.setPen(QPen(QColor(0,0,255)));
                     painter.drawPoint(aele);
                 }
-                painter.setPen(m_pen);
+               painter.restore();
             }
  }
+void PointsShape::drawshapex(QPainter &painter,
+                             double dmovx,
+                             double dmovy,
+                             double dangle,
+                             double dzoomx,
+                             double dzoomy)
+{
+//! [9]
+    painter.setPen(m_pen);
+    painter.setBrush(m_brush);
+
+            if(1==m_ishow)
+            {// draw dot
+                int icount = m_path.elementCount();
+                for(int i=0;i<icount;i++)
+                {
+                     QPainterPath::Element aele = m_path.elementAt(i);
+
+
+                     double dvaluex = aele.x;
+                     double dvaluey = aele.y;
+                     dvaluex = dvaluex*dzoomx+dmovx;
+                     dvaluey = dvaluey*dzoomy+dmovy;
+
+                     painter.drawPoint(dvaluex,dvaluey);
+                }
+            }
+            else if(2==m_ishow)
+            {// draw x
+                int icount = m_path.elementCount();
+                for(int i=0;i<icount;i++)
+                {
+                     QPainterPath::Element aele = m_path.elementAt(i);
+
+                     double dvaluex = aele.x;
+                     double dvaluey = aele.y;
+                     dvaluex = dvaluex*dzoomx+dmovx;
+                     dvaluey = dvaluey*dzoomy+dmovy;
+                     painter.drawLine(dvaluex-3,dvaluey-3,dvaluex+3,dvaluey+3);
+                     painter.drawLine(dvaluex-3,dvaluey+3,dvaluex+3,dvaluey-3);
+                }
+            }
+            else if(16==m_ishow)
+            {//四边形
+                painter.setPen(QPen(QColor(0,255,0)));
+                int icount = m_path.elementCount();
+                for(int i=0;i<icount-4;i=i+4)
+                {
+                     QPainterPath::Element aele1 = m_path.elementAt(i);
+                     QPainterPath::Element aele2 = m_path.elementAt(i+1);
+                     QPainterPath::Element aele3 = m_path.elementAt(i+2);
+                     QPainterPath::Element aele4 = m_path.elementAt(i+3);
+                     painter.drawLine(aele1.x,aele1.y,aele2.x,aele2.y);
+                     painter.drawLine(aele2.x,aele2.y,aele3.x,aele3.y);
+                     painter.drawLine(aele3.x,aele3.y,aele4.x,aele4.y);
+                     painter.drawLine(aele4.x,aele4.y,aele1.x,aele1.y);
+                 }
+            }
+            else if(3==m_ishow)
+                painter.drawPath(m_path);
+            else if(4==m_ishow)
+            {
+                int icount = 1/m_dminpercent ;
+                for(int i=0;i<icount;i++)
+                {
+                   QPointF fpoint = m_path.pointAtPercent(m_dminpercent*i);
+                    painter.drawPoint(fpoint);
+                }
+
+                painter.setPen(QPen(QColor(255,0,0)));
+                icount = m_path.elementCount();
+                for(int i=0;i<icount;i++)
+                {
+                     QPainterPath::Element aele = m_path.elementAt(i);
+                     painter.drawLine(aele.x-3,aele.y-3,aele.x+3,aele.y+3);
+                     painter.drawLine(aele.x-3,aele.y+3,aele.x+3,aele.y-3);
+                     //painter.drawPoint(aele.x,aele.y);
+                }
+                painter.setPen(m_pen);
+            }
+            else if(8==m_ishow)
+            {
+                painter.save();
+
+                int icount = m_path.elementCount();
+
+                for(int i=0;i<icount-1;i++)
+                {
+                    QPainterPath::Element aele = m_path.elementAt(i);
+
+                    double dvaluex = aele.x;
+                    double dvaluey = aele.y;
+                    dvaluex = dvaluex*dzoomx+dmovx;
+                    dvaluey = dvaluey*dzoomy+dmovy;
+
+                    painter.setPen(QPen(QColor(255,0,0)));
+                    painter.drawPoint(QPointF(dvaluex,dvaluey));
+                    i++;
+                    aele = m_path.elementAt(i);
+
+                    dvaluex = aele.x;
+                    dvaluey = aele.y;
+                    dvaluex = dvaluex*dzoomx+dmovx;
+                    dvaluey = dvaluey*dzoomy+dmovy;
+
+                    painter.setPen(QPen(QColor(0,0,255)));
+                    painter.drawPoint(QPointF(dvaluex,dvaluey));
+                }
+               painter.restore();
+            }
+ }
+
+
+
+
 void PointsShape::save(const char * pchar)
 {
 
@@ -536,7 +685,7 @@ void PointsShape::save(const char * pchar)
     if(isize<=0)
         return;
     FILE    *rf = fopen(pchar, "w+");
-   if ( rf == NULL)
+   if ( rf == nullptr)
        return;
    rewind(rf);
    QPainterPath::Element aele = m_path.elementAt(0);
@@ -561,7 +710,7 @@ void PointsShape::load(const char * pchar)
 {
     clear();
     FILE    *rf = fopen(pchar, "rb");
-    if(NULL==rf)
+    if(nullptr==rf)
         return;
     fseek(rf,0,SEEK_END);
     int filesize = ftell(rf);
@@ -590,7 +739,842 @@ void PointsShape::load(const char * pchar)
     delete []pcharget;
         fclose(rf);
 }
-void PointsShape::doublepartten(double igap,int idirect,PointsShape& apoints)
+
+
+
+void PointsShape::patterntokeys(QList <QPoint> &keypointsA,QList <QPoint> &keypointsA_,
+                            QList <QPoint> &keypointsB,QList <QPoint> &keypointsB_,
+                            int ibackgroundtype)
+{//ibackgroundtype=0无背景=1黑背景=2白背景
+    int icount = m_path.elementCount();
+    for(int i=0;i<icount;)
+    {
+         QPainterPath::Element aele0 = m_path.elementAt(i);
+         i++;
+         QPainterPath::Element aele1 = m_path.elementAt(i);
+         i++;
+         qreal ix0 = aele0.x;
+         qreal iy0 = aele0.y;
+         qreal ix1 = aele1.x;
+         qreal iy1 = aele1.y;
+
+         qreal ix = aele0.x + aele1.x;
+         qreal iy = aele0.y + aele1.y;
+         if( ix0 == ix1 && iy0 > iy1 )
+         {
+             if(0==ibackgroundtype)
+             keypointsA_.append(QPoint(ix/2,iy/2));
+             else if(1==ibackgroundtype)
+             keypointsA_.append(QPoint(ix0,iy0));
+             else if(2==ibackgroundtype)
+             keypointsA_.append(QPoint(ix1,iy1));
+         }
+         else if( ix0 == ix1 && iy0 < iy1 )
+         {
+             if(0==ibackgroundtype)
+             keypointsA.append(QPoint(ix/2,iy/2));
+             else if(1==ibackgroundtype)
+             keypointsA.append(QPoint(ix1,iy1));
+             else if(2==ibackgroundtype)
+             keypointsA.append(QPoint(ix0,iy0));
+         }
+         else if(iy0 == iy1 && ix0 > ix1)
+         {
+             if(0==ibackgroundtype)
+             keypointsB_.append(QPoint(ix/2,iy/2));
+             else if(1==ibackgroundtype)
+             keypointsB_.append(QPoint(ix1,iy1));
+             else if(2==ibackgroundtype)
+             keypointsB_.append(QPoint(ix0,iy0));
+         }
+         else if(iy0 == iy1 && ix0 < ix1)
+         {
+             if(0==ibackgroundtype)
+             keypointsB.append(QPoint(ix/2,iy/2));
+             else if(1==ibackgroundtype)
+             keypointsB.append(QPoint(ix0,iy0));
+             else if(2==ibackgroundtype)
+             keypointsB.append(QPoint(ix1,iy1));
+         }
+    }
+
+}
+void PointsShape::keystopattern(QList <QPoint> &keypointsA,QList <QPoint> &keypointsA_,
+                                QList <QPoint> &keypointsB,QList <QPoint> &keypointsB_,
+                                int igap,int itype,int isgap,int iline)
+{
+
+    clear();
+    int icount0 = keypointsA.size();
+    int icount1 = keypointsA_.size();
+    int icount2 =  keypointsB.size();
+    int icount3 =  keypointsB_.size();
+    if(1==itype)
+    {
+        for(int i=0;i<icount0;i++)
+        {
+            QPoint apoint = keypointsA.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()-igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()+igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+        }
+        for(int i=0;i<icount1;i++)
+        {
+            QPoint apoint = keypointsA_.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()+igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()-igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+        }
+        for(int i=0;i<icount2;i++)
+        {
+            QPoint apoint = keypointsB.at(i);
+            qreal ix0 = apoint.x()-igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()+igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+        }
+        for(int i=0;i<icount3;i++)
+        {
+            QPoint apoint = keypointsB_.at(i);
+            qreal ix0 = apoint.x()+igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()-igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+        }
+    }
+    else if(2==itype)
+    {
+        for(int i=0;i<icount0;i++)
+        {
+            QPoint apoint = keypointsA.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()-igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()+igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = apoint.x();
+            qreal iy2 = iy0-igap;
+            qreal ix3 = apoint.x();
+            qreal iy3 = iy1+igap;
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount1;i++)
+        {
+            QPoint apoint = keypointsA_.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()+igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()-igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = apoint.x();
+            qreal iy2 = iy0+igap;
+            qreal ix3 = apoint.x();
+            qreal iy3 = iy1-igap;
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount2;i++)
+        {
+            QPoint apoint = keypointsB.at(i);
+            qreal ix0 = apoint.x()-igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()+igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = ix0-igap;
+            qreal iy2 = apoint.y();
+            qreal ix3 = ix1+igap;
+            qreal iy3 = apoint.y();
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount3;i++)
+        {
+            QPoint apoint = keypointsB_.at(i);
+            qreal ix0 = apoint.x()+igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()-igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = ix0+igap;
+            qreal iy2 = apoint.y();
+            qreal ix3 = ix1-igap;
+            qreal iy3 = apoint.y();
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+    }
+    else if(100==itype)
+    {
+        for(int i=0;i<icount0;i++)
+        {
+            QPoint apoint = keypointsA.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()-igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()+isgap;//+igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = apoint.x();
+            qreal iy2 = iy0-igap;
+            qreal ix3 = apoint.x();
+            qreal iy3 = iy1;//+igap;
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount1;i++)
+        {
+            QPoint apoint = keypointsA_.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()+igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()-isgap;//-igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = apoint.x();
+            qreal iy2 = iy0+igap;
+            qreal ix3 = apoint.x();
+            qreal iy3 = iy1;//-igap;
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount2;i++)
+        {
+            QPoint apoint = keypointsB.at(i);
+            qreal ix0 = apoint.x()-igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()+isgap;//+igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = ix0-igap;
+            qreal iy2 = apoint.y();
+            qreal ix3 = ix1;//+igap;
+            qreal iy3 = apoint.y();
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount3;i++)
+        {
+            QPoint apoint = keypointsB_.at(i);
+            qreal ix0 = apoint.x()+igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()-isgap;//-igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = ix0+igap;
+            qreal iy2 = apoint.y();
+            qreal ix3 = ix1;//-igap;
+            qreal iy3 = apoint.y();
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+
+    }
+    else if(200==itype)
+    {
+        for(int i=0;i<icount0;i++)
+        {
+            QPoint apoint = keypointsA.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()-isgap;//-igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()+igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = apoint.x();
+            qreal iy2 = iy0;//-igap;
+            qreal ix3 = apoint.x();
+            qreal iy3 = iy1+igap;
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount1;i++)
+        {
+            QPoint apoint = keypointsA_.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()+isgap;//+igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()-igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = apoint.x();
+            qreal iy2 = iy0;//+igap;
+            qreal ix3 = apoint.x();
+            qreal iy3 = iy1-igap;
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount2;i++)
+        {
+            QPoint apoint = keypointsB.at(i);
+            qreal ix0 = apoint.x()-isgap;//-igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()+igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = ix0;//-igap;
+            qreal iy2 = apoint.y();
+            qreal ix3 = ix1+igap;
+            qreal iy3 = apoint.y();
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+        for(int i=0;i<icount3;i++)
+        {
+            QPoint apoint = keypointsB_.at(i);
+            qreal ix0 = apoint.x()+isgap;//+igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()-igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            qreal ix2 = ix0;//+igap;
+            qreal iy2 = apoint.y();
+            qreal ix3 = ix1-igap;
+            qreal iy3 = apoint.y();
+            addpointa(ix2,iy2);
+            addpointb(ix3,iy3);
+        }
+    }
+    else if(1000==itype)
+    {
+        for(int i=0;i<icount0;i++)
+        {
+            QPoint apoint = keypointsA.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()-igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()+isgap;//+igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            for(int j=0;j<iline;j++)
+            {
+                iy0 = iy0-igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+        for(int i=0;i<icount1;i++)
+        {
+            QPoint apoint = keypointsA_.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y()+igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()-isgap;//-igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            for(int j=0;j<iline;j++)
+            {
+                iy0 = iy0+igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+        for(int i=0;i<icount2;i++)
+        {
+            QPoint apoint = keypointsB.at(i);
+            qreal ix0 = apoint.x()-igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()+isgap;//+igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            for(int j=0;j<iline;j++)
+            {
+                ix0 = ix0-igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+        for(int i=0;i<icount3;i++)
+        {
+            QPoint apoint = keypointsB_.at(i);
+            qreal ix0 = apoint.x()+igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()-isgap;//-igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            for(int j=0;j<iline;j++)
+            {
+                ix0 = ix0+igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+
+    }
+    else if(2000==itype)
+    {
+        for(int i=0;i<icount0;i++)
+        {
+            QPoint apoint = keypointsA.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y();//-igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()+igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+
+            for(int j=0;j<iline;j++)
+            {
+                iy1 = iy1+igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+        for(int i=0;i<icount1;i++)
+        {
+            QPoint apoint = keypointsA_.at(i);
+            qreal ix0 = apoint.x();
+            qreal iy0 = apoint.y();//+igap;
+            qreal ix1 = apoint.x();
+            qreal iy1 = apoint.y()-igap;
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            for(int j=0;j<iline;j++)
+            {
+                iy1 = iy1-igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+        for(int i=0;i<icount2;i++)
+        {
+            QPoint apoint = keypointsB.at(i);
+            qreal ix0 = apoint.x();//-igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()+igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            for(int j=0;j<iline;j++)
+            {
+                ix1 = ix1+igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+        for(int i=0;i<icount3;i++)
+        {
+            QPoint apoint = keypointsB_.at(i);
+            qreal ix0 = apoint.x();//+igap;
+            qreal iy0 = apoint.y();
+            qreal ix1 = apoint.x()-igap;
+            qreal iy1 = apoint.y();
+            addpointa(ix0,iy0);
+            addpointb(ix1,iy1);
+            for(int j=0;j<iline;j++)
+            {
+                ix1 = ix1-igap;
+                addpointa(ix0,iy0);
+                addpointb(ix1,iy1);
+            }
+        }
+
+    }
+
+}
+void PointsShape::keyszoom(QList <QPoint> &keypointsA,QList <QPoint> &keypointsA_,
+                   QList <QPoint> &keypointsB,QList <QPoint> &keypointsB_,
+                    double dxz,double dyz)
+{//模型缩小忽略重复点
+    QList <QPoint> keypointsA1;
+    QList <QPoint> keypointsA_1;
+    QList <QPoint> keypointsB1;
+    QList <QPoint> keypointsB_1;
+    int icount0 = keypointsA.size();
+    int icount1 = keypointsA_.size();
+    int icount2 =  keypointsB.size();
+    int icount3 =  keypointsB_.size();
+
+    for(int i=0;i<icount0;i++)
+    {
+       QPoint apoint = keypointsA.at(i);
+       qreal ix0 = apoint.x()*dxz;
+       qreal iy0 = apoint.y()*dyz;
+       if(!keypointsA1.contains(QPoint(ix0,iy0)))
+       keypointsA1.append(QPoint(ix0,iy0));
+    }
+    for(int i=0;i<icount1;i++)
+    {
+       QPoint apoint = keypointsA_.at(i);
+       qreal ix0 = apoint.x()*dxz;
+       qreal iy0 = apoint.y()*dyz;
+       if(!keypointsA_1.contains(QPoint(ix0,iy0)))
+       keypointsA_1.append(QPoint(ix0,iy0));
+    }
+    for(int i=0;i<icount2;i++)
+    {
+       QPoint apoint = keypointsB.at(i);
+       qreal ix0 = apoint.x()*dxz;
+       qreal iy0 = apoint.y()*dyz;
+       if(!keypointsB1.contains(QPoint(ix0,iy0)))
+       keypointsB1.append(QPoint(ix0,iy0));
+    }
+    for(int i=0;i<icount3;i++)
+    {
+       QPoint apoint = keypointsB_.at(i);
+       qreal ix0 = apoint.x()*dxz;
+       qreal iy0 = apoint.y()*dyz;
+       if(!keypointsB_1.contains(QPoint(ix0,iy0)))
+       keypointsB_1.append(QPoint(ix0,iy0));
+    }
+  /*
+    keypointsA1 = keypointsA;
+    keypointsA_1 =  keypointsA_ ;
+    keypointsB1 = keypointsB;
+    keypointsB_1 = keypointsB_;
+  */
+        keypointsA.clear();
+        keypointsA_.clear();
+        keypointsB.clear();
+        keypointsB_.clear();
+
+    keypointsA = keypointsA1;
+    keypointsA_ = keypointsA_1;
+    keypointsB = keypointsB1;
+    keypointsB_ = keypointsB_1;
+
+
+}
+void PointsShape::patternzoom(double dxz,double dyz,int igap,int itype,int iline)
+{
+    if(0==itype)
+    {
+        QList <QPoint> keypointsA;
+        QList <QPoint> keypointsA_;
+        QList <QPoint> keypointsB;
+        QList <QPoint> keypointsB_;
+        patterntokeys(keypointsA,keypointsA_,keypointsB,keypointsB_);
+        keyszoom(keypointsA,keypointsA_,keypointsB,keypointsB_,dxz,dyz);
+        keystopattern(keypointsA,keypointsA_,keypointsB,keypointsB_,igap);
+    }
+    else if(1==itype)
+    {//黑色线和形体模型缩小（底色为白）
+        QList <QPoint> keypointsA;
+        QList <QPoint> keypointsA_;
+        QList <QPoint> keypointsB;
+        QList <QPoint> keypointsB_;
+        patterntokeys(keypointsA,keypointsA_,keypointsB,keypointsB_,1);
+        keyszoom(keypointsA,keypointsA_,keypointsB,keypointsB_,dxz,dyz);
+        keystopattern(keypointsA,keypointsA_,keypointsB,keypointsB_,igap,1000,0,iline);
+    }
+    else if(2==itype)
+    {//白色线和形体模型缩小（底色为黑）
+        QList <QPoint> keypointsA;
+        QList <QPoint> keypointsA_;
+        QList <QPoint> keypointsB;
+        QList <QPoint> keypointsB_;
+        patterntokeys(keypointsA,keypointsA_,keypointsB,keypointsB_,2);
+        keyszoom(keypointsA,keypointsA_,keypointsB,keypointsB_,dxz,dyz);
+        keystopattern(keypointsA,keypointsA_,keypointsB,keypointsB_,igap,2000,0,iline);
+    }
+ }
+void PointsShape::keysrootgrid(int ibackgroundtype,
+                   double drate,
+                   int ilevel)
+{//ibackgroundtype=0 无背景   =1黑背景  =2白背景
+    int icurmodule = BackImageManager::GetCurMode();
+    QRootGrid *arootA = BackImageManager::GetRootGridA(icurmodule);
+    QRootGrid *arootA_ = BackImageManager::GetRootGridA_(icurmodule);
+    QRootGrid *arootB = BackImageManager::GetRootGridB(icurmodule);
+    QRootGrid *arootB_ = BackImageManager::GetRootGridB_(icurmodule);
+    arootA->release();
+    arootA_->release();
+    arootB->release();
+    arootB_->release();
+    QList <QPoint> keypointsA;
+    QList <QPoint> keypointsA_;
+    QList <QPoint> keypointsB;
+    QList <QPoint> keypointsB_;
+    patterntokeys(keypointsA,keypointsA_,keypointsB,keypointsB_,ibackgroundtype);
+   // double drate =0.25;
+   // int ilevel = 3;
+    double dxz0 = 1;
+    double dyz0 = 1;
+    int icount0 = keypointsA.size();
+    for(int i=0;i<icount0;i++)
+    {
+       QPoint apoint = keypointsA.at(i);
+       QList <QPoint> rootpoints;
+       dxz0 = 1;
+       dyz0 = 1;
+       for(int il=0;il<ilevel;il++)
+       {
+           qreal ix0 = apoint.x()*dxz0;
+           qreal iy0 = apoint.y()*dyz0;
+           rootpoints.push_front(QPoint(ix0,iy0));
+           dxz0 = dxz0 * drate;
+           dyz0 = dyz0 * drate;
+       }
+       arootA->addrootpointlist(rootpoints,1);
+    }
+    //
+    dxz0 = 1;
+    dyz0 = 1;
+    icount0 = keypointsA_.size();
+    for(int i=0;i<icount0;i++)
+    {
+       QPoint apoint = keypointsA_.at(i);
+       QList <QPoint> rootpoints;
+       dxz0 = 1;
+       dyz0 = 1;
+       for(int il=0;il<ilevel;il++)
+       {
+           qreal ix0 = apoint.x()*dxz0;
+           qreal iy0 = apoint.y()*dyz0;
+           rootpoints.push_front(QPoint(ix0,iy0));
+           dxz0 = dxz0 * drate;
+           dyz0 = dyz0 * drate;
+       }
+       arootA->addrootpointlist(rootpoints,2);
+    }
+    //
+    dxz0 = 1;
+    dyz0 = 1;
+    icount0 = keypointsB.size();
+    for(int i=0;i<icount0;i++)
+    {
+       QPoint apoint = keypointsB.at(i);
+       QList <QPoint> rootpoints;
+       dxz0 = 1;
+       dyz0 = 1;
+       for(int il=0;il<ilevel;il++)
+       {
+           qreal ix0 = apoint.x()*dxz0;
+           qreal iy0 = apoint.y()*dyz0;
+           rootpoints.push_front(QPoint(ix0,iy0));
+           dxz0 = dxz0 * drate;
+           dyz0 = dyz0 * drate;
+       }
+       arootA->addrootpointlist(rootpoints,4);
+    }
+    //
+    dxz0 = 1;
+    dyz0 = 1;
+    icount0 = keypointsB_.size();
+    for(int i=0;i<icount0;i++)
+    {
+       QPoint apoint = keypointsB_.at(i);
+       QList <QPoint> rootpoints;
+       dxz0 = 1;
+       dyz0 = 1;
+       for(int il=0;il<ilevel;il++)
+       {
+           qreal ix0 = apoint.x()*dxz0;
+           qreal iy0 = apoint.y()*dyz0;
+           rootpoints.push_front(QPoint(ix0,iy0));
+           dxz0 = dxz0 * drate;
+           dyz0 = dyz0 * drate;
+       }
+       arootA->addrootpointlist(rootpoints,8);
+    }
+
+
+
+}
+void QRootGrid::gridclasstype()
+{
+// int m_itype;
+    //A=1,A_=2,B=4,B_=8
+    //背景 白 目标 黑
+    //背景 黑 目标 白
+    //A 横向 上白下黑
+    //A_ 横向 上黑下白
+    //B 纵向 左白右黑
+    //B_ 纵向 左黑右白
+
+}
+void QRootGrid::drawgrid(QPainter &painter)
+{
+
+    QRootGrid *pgrid = this;
+    int isize = m_plist.size();
+    for(int i=0;i<isize;i++)
+    {
+        QPoint apoint = m_plist[i];
+        QList <QPoint> rootpoints;
+        apoint.setX(apoint.x()+100*m_ilevel);
+        apoint.setY(apoint.y()+100*m_ilevel);
+        if(1==m_glist[i].m_itype)
+            painter.setPen(Qt::darkYellow);
+        else if(2==m_glist[i].m_itype)
+            painter.setPen(Qt::darkMagenta);
+        else if(4==m_glist[i].m_itype)
+            painter.setPen(Qt::darkCyan);
+        else if(8==m_glist[i].m_itype)
+            painter.setPen(Qt::darkBlue);
+        else if((1&2)==m_glist[i].m_itype)
+            painter.setPen(Qt::darkGreen);
+        else if((1&8)==m_glist[i].m_itype)
+            painter.setPen(Qt::darkRed);
+        else if((1&4)==m_glist[i].m_itype)
+            painter.setPen(Qt::yellow);
+        else if((2&4)==m_glist[i].m_itype)
+            painter.setPen(Qt::magenta);
+        else if((2&8)==m_glist[i].m_itype)
+            painter.setPen(Qt::cyan);
+        else if((4&8)==m_glist[i].m_itype)
+            painter.setPen(Qt::blue);
+        else if((1&2&4)==m_glist[i].m_itype)
+            painter.setPen(Qt::green);
+        else if((1&4&8)==m_glist[i].m_itype)
+            painter.setPen(Qt::red);
+        else if((2&4&8)==m_glist[i].m_itype)
+            painter.setPen(Qt::gray);
+        painter.drawPoint(apoint);
+    }
+    for(int i=0;i<isize;i++)
+    {
+        m_glist[i].drawgrid(painter);
+    }
+}
+void QRootGrid::drawlayer(QPainter &painter,int ilevel)
+{
+    int isize = m_plist.size();
+    if(m_ilevel==ilevel)
+    {
+        QRootGrid *pgrid = this;
+        for(int i=0;i<isize;i++)
+        {
+            QPoint apoint = m_plist[i];
+            QList <QPoint> rootpoints;
+            apoint.setX(apoint.x()+100*m_ilevel);
+            apoint.setY(apoint.y()+100*m_ilevel);
+            if(1==m_glist[i].m_itype)
+                painter.setPen(Qt::darkYellow);
+            else if(2==m_glist[i].m_itype)
+                painter.setPen(Qt::darkMagenta);
+            else if(4==m_glist[i].m_itype)
+                painter.setPen(Qt::darkCyan);
+            else if(8==m_glist[i].m_itype)
+                painter.setPen(Qt::darkBlue);
+            else if((1&2)==m_glist[i].m_itype)
+                painter.setPen(Qt::darkGreen);
+            else if((1&8)==m_glist[i].m_itype)
+                painter.setPen(Qt::darkRed);
+            else if((1&4)==m_glist[i].m_itype)
+                painter.setPen(Qt::yellow);
+            else if((2&4)==m_glist[i].m_itype)
+                painter.setPen(Qt::magenta);
+            else if((2&8)==m_glist[i].m_itype)
+                painter.setPen(Qt::cyan);
+            else if((4&8)==m_glist[i].m_itype)
+                painter.setPen(Qt::blue);
+            else if((1&2&4)==m_glist[i].m_itype)
+                painter.setPen(Qt::green);
+            else if((1&4&8)==m_glist[i].m_itype)
+                painter.setPen(Qt::red);
+            else if((2&4&8)==m_glist[i].m_itype)
+                painter.setPen(Qt::gray);
+            painter.drawPoint(apoint);
+        }
+    }
+
+    for(int i=0;i<isize;i++)
+    {
+        m_glist[i].drawgrid(painter);
+    }
+}
+
+
+void QRootGrid::drawshape(QPainter &painter)
+{
+    if(1==m_ishow)
+    {
+        drawgrid(painter);
+    }
+}
+QRootGrid::QRootGrid():
+    m_ilevel(0),
+    m_point(QPoint(0,0))
+{
+
+}
+QRootGrid::~QRootGrid()
+{
+    release();
+}
+
+void QRootGrid::release()
+{
+    int isize = m_plist.size();
+    for(int i=0;i<isize;i++)
+    {
+        m_glist[i].release();
+    }
+    m_glist.clear();
+    m_plist.clear();
+}
+
+void QRootGrid::addrootpointlist(QList <QPoint> &rootpoints,int itype)
+{
+    int isize = rootpoints.size();
+    QRootGrid *pgrid = this;
+    for(int i=0;i<isize;i++)
+    {
+        QPoint apoint = rootpoints[i];
+        QList <QPoint> alist = pgrid->m_plist;
+        if(!alist.contains(apoint))
+        {
+              QRootGrid agrid;// = new QRootGrid;
+              agrid.m_ilevel=i+1;
+              agrid.m_point=apoint;
+              agrid.m_itype =itype;
+              pgrid->m_glist.push_back(agrid);
+              pgrid->m_plist.push_back(apoint);
+              pgrid = &(pgrid->m_glist[pgrid->m_glist.size()-1]);
+        }
+        else
+        {
+           int ilistsize = alist.size();
+           int ifind =-1;
+           for(int t=0;t<ilistsize;t++)
+               if(apoint==alist[t])
+                   ifind=t;
+           if(-1!=ifind)
+           {
+               pgrid->m_itype =pgrid->m_itype&itype;
+               pgrid = &(pgrid->m_glist[ifind]);
+           }
+        }
+
+    }
+}
+
+void PointsShape::patterntranform(int igap,int itype,int isgap,int iline)
+{//模型转换
+    QList <QPoint> keypointsA;
+    QList <QPoint> keypointsA_;
+    QList <QPoint> keypointsB;
+    QList <QPoint> keypointsB_;
+    patterntokeys(keypointsA,keypointsA_,keypointsB,keypointsB_);
+    keystopattern(keypointsA,keypointsA_,keypointsB,keypointsB_,igap,itype,isgap,iline);
+
+}
+
+
+
+void PointsShape::doublepattern(double igap,int idirect,PointsShape& apoints)
 {//more and more furture in here
 
     double dx ;
@@ -660,7 +1644,7 @@ void PointsShape::doublepartten(double igap,int idirect,PointsShape& apoints)
     }
 
 }
-void PointsShape::onepartten(double igap,int idirect,PointsShape& apoints)
+void PointsShape::onepattern(double igap,int idirect,PointsShape& apoints)
 {//more and more furture in here
 
     double dx ;
@@ -770,6 +1754,43 @@ void PointsShape::Rotate(double dangle)
     m_path = pimage->ImageTransfer(m_path,0,0,dangle);
 
 }
+void PointsShape::calibration(double dx,double dy,double dangle)
+{
+    int icurmodule = BackImageManager::GetCurMode();
+    ImageBase *pimage = BackImageManager::GetTransferImage(icurmodule);
+
+    m_path = pimage->ImageTransfer(m_path,dx,dy,dangle);
+
+}
+
+double PointsShape::getx(int inum)
+{
+    int icount = m_path.elementCount();
+    if(icount>inum&&inum>=0)
+    {
+        QPainterPath::Element aele = m_path.elementAt(inum);
+        return aele.x;
+    }
+    else {
+        return -99999;
+    }
+}
+double PointsShape::gety(int inum)
+{
+    int icount = m_path.elementCount();
+    if(icount>inum&&inum>=0)
+    {
+        QPainterPath::Element aele = m_path.elementAt(inum);
+        return aele.y;
+    }
+    else {
+        return -99999;
+    }
+
+}
+
+
+
 void PointsShape::Zoom(double dx0,double dy0)
 {
     int icurmodule = BackImageManager::GetCurMode();
@@ -1052,7 +2073,10 @@ void RectsShape::setstring(int inum,const QString &str)
     if(inum<m_strlist.size())
     m_strlist[inum] = str;
 }
+void RectsShape::setangle(int inum,double dangle)
+{
 
+}
 int RectsShape::size()
 {
     return m_rects.size();
@@ -1061,6 +2085,7 @@ void RectsShape::clear()
 {
     m_rects.clear();
     m_strlist.clear();
+    m_angles.clear();
 }
 
 static QGradient gradient(const QColor &color, const QRect &rect)
@@ -1114,7 +2139,7 @@ void RectsShape::drawshape(QPainter &painter)
                         {
                             painter.setPen(QColor(0,100,0));
                             painter.drawText(QRect(m_rects[i].x(),
-                                                   m_rects[i].y()-30,
+                                                   m_rects[i].y()-20,
                                                    80,30),
                                              Qt::AlignTop & Qt::AlignRight,
                                              m_strlist[i]);
@@ -1139,7 +2164,7 @@ void RectsShape::drawshape(QPainter &painter)
                     {
                         painter.setPen(QColor(0,100,0));
                         painter.drawText(QRect(m_rects[icount-1].x(),
-                                               m_rects[icount-1].y()-30,
+                                               m_rects[icount-1].y()-20,
                                                80,30),
                                          Qt::AlignTop & Qt::AlignRight,
                                          m_strlist[icount-1]);
@@ -1150,6 +2175,127 @@ void RectsShape::drawshape(QPainter &painter)
 
             }
 }
+void RectsShape::drawshapex(QPainter &painter,
+                            double dmovx,
+                            double dmovy,
+                            double dangle,
+                            double dzoomx,
+                            double dzoomy)
+{
+    painter.setPen(m_pen);
+    painter.setBrush(Qt::NoBrush);
+
+            if(1==m_ishow)
+            {// draw rects
+               //painter.drawPath(m_path);
+               painter.setPen(m_pen);
+               RectVector arects=m_rects;
+               for (int i=0;i<m_rects.size();i++)
+               {
+                   double dvaluex = arects[i].x();
+                   double dvaluey = arects[i].y();
+                   double dvaluew = arects[i].width();
+                   double dvalueh = arects[i].height();
+
+                   dvaluex = dvaluex*dzoomx+dmovx;
+                   dvaluey = dvaluey*dzoomy+dmovy;
+                   dvaluew = dvaluew*dzoomx;
+                   dvalueh = dvalueh*dzoomy;
+
+                   arects[i].setX(dvaluex);
+                   arects[i].setY(dvaluey);
+                   arects[i].setWidth(dvaluew);
+                   arects[i].setHeight(dvalueh);
+               }
+               painter.drawRects(arects);
+            }
+            if(2==m_ishow)
+            {
+                int ishowfont = 1;
+                if(m_rects.size()!=m_strlist.size())
+                    ishowfont = 0;
+                RectVector arects=m_rects;
+                int icount = m_rects.size();
+                for(int i=0;i<icount;i++)
+                {
+                    double dvaluex = arects[i].x();
+                    double dvaluey = arects[i].y();
+                    double dvaluew = arects[i].width();
+                    double dvalueh = arects[i].height();
+
+                    dvaluex = dvaluex*dzoomx+dmovx;
+                    dvaluey = dvaluey*dzoomy+dmovy;
+                    dvaluew = dvaluew*dzoomx;
+                    dvalueh = dvalueh*dzoomy;
+
+                    arects[i].setX(dvaluex);
+                    arects[i].setY(dvaluey);
+                    arects[i].setWidth(dvaluew);
+                    arects[i].setHeight(dvalueh);
+                    if(-1==m_ispecshow
+                       ||i==m_ispecshow)
+                    {
+                        painter.setPen(m_pen);
+                        painter.drawRect(arects[i]);
+                        if(ishowfont)
+                        {
+                            painter.setPen(QColor(0,100,0));
+                            painter.drawText(QRect(arects[i].x(),
+                                                   arects[i].y()-15,
+                                                   80,30),
+                                             Qt::AlignTop & Qt::AlignRight,
+                                             m_strlist[i]);
+                        }
+                    }
+
+                }
+
+            }
+            if(4==m_ishow)
+            {
+                int ishowfont = 1;
+                if(m_rects.size()!=m_strlist.size())
+                    ishowfont = 0;
+                RectVector arects=m_rects;
+                int icount = m_rects.size();
+
+                if(icount>0)
+                {
+                    double dvaluex = arects[icount-1].x();
+                    double dvaluey = arects[icount-1].y();
+                    double dvaluew = arects[icount-1].width();
+                    double dvalueh = arects[icount-1].height();
+
+                    dvaluex = dvaluex*dzoomx+dmovx;
+                    dvaluey = dvaluey*dzoomy+dmovy;
+                    dvaluew = dvaluew*dzoomx;
+                    dvalueh = dvalueh*dzoomy;
+
+                    arects[icount-1].setX(dvaluex);
+                    arects[icount-1].setY(dvaluey);
+                    arects[icount-1].setWidth(dvaluew);
+                    arects[icount-1].setHeight(dvalueh);
+                    painter.setPen(m_pen);
+                    painter.drawRect(arects[icount-1]);
+                    if(ishowfont)
+                    {
+                        painter.setPen(QColor(0,100,0));
+                        painter.drawText(QRect(arects[icount-1].x(),
+                                               arects[icount-1].y()-15,
+                                               80,30),
+                                         Qt::AlignTop & Qt::AlignRight,
+                                         m_strlist[icount-1]);
+
+                    }
+
+                }
+
+            }
+}
+
+
+
+
 QRect RectsShape::comb(QRect &rect1,QRect &rect2)
 {
 
